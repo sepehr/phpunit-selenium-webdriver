@@ -473,6 +473,19 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Find an element by its value.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function findByValue($value)
+    {
+        // @TODO: Implement.
+    }
+
+
+    /**
      * Find an element by its name attribute.
      *
      * @param string $name
