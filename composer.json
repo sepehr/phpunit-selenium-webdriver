@@ -1,0 +1,22 @@
+{
+    "name": "sepehr/phpunit-selenium-webdriver",
+    "description": "Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.",
+    "keywords": ["phpunit", "testing", "selenium", "laravel", "integration", "acceptance", "webdriver"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sepehr Lajevardi",
+            "email": "lajevardi@gmail.com",
+            "homepage": "https://github.com/sepehr"
+        }
+    ],
+    "require": {
+        "phpunit/phpunit": "~5.0",
+        "facebook/webdriver": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sepehr\\PHPUnitSelenium\\": "src/"
+        }
+    }
+}
