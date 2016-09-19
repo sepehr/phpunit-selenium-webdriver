@@ -30,6 +30,7 @@
 // - wait(), waitForElement()
 // - updateUrl() wait issue
 // - submitForm()
+// - Touch events
 
 namespace Sepehr\PHPUnitSelenium;
 
