@@ -14,13 +14,15 @@
 // - User-friendly error messages
 // - Detect if Selenium is running
 // - Detect if Selenium browser driver is present
+// - Exceptions
 
 namespace Sepehr\PHPUnitSelenium;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\WebDriverCapabilityType;
+use Facebook\WebDriver\Exception\WebDriverCurlException;
 
-class SeleniumTestCase extends \PHPUnit_Framework_TestCase
+abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -79,13 +81,22 @@ class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param bool $force Whether to force a new session or to user the old one.
      *
      * @return $this
+     * @throws WebDriverCurlException
      */
     protected function createSession($force = false)
     {
-        if ($force or ! $this->webDriver instanceof RemoteWebDriver) {
-            $this->webDriver = RemoteWebDriver::create($this->host, [
+        if ($force or ! $this->webDriverLoaded()) {
+            $capabilities = [
                 WebDriverCapabilityType::BROWSER_NAME => $this->browser,
-            ]);
+            ];
+
+            try {
+                $this->webDriver = RemoteWebDriver::create($this->host, $capabilities);
+            } catch (WebDriverCurlException $e) {
+                throw new WebDriverCurlException(
+                    $this->notRunningErrorMessage($e->getMessage())
+                );
+            }
         }
 
         return $this;
@@ -169,7 +180,7 @@ class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    private function normalizeUrl(string $path) : string
+    private function normalizeUrl($path)
     {
         if ($path[0] === '/') {
             $path = substr($path, 1);
@@ -180,5 +191,31 @@ class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         }
 
         return trim($path, '/');
+    }
+
+    /**
+     * Check if webdriver is loaded.
+     *
+     * @return bool
+     */
+    private function webDriverLoaded()
+    {
+        return $this->webDriver instanceof RemoteWebDriver;
+    }
+
+    /**
+     * Returns a comprehensive "Selenium is not running" error message.
+     *
+     * @param string $error Original error message.
+     *
+     * @return string
+     */
+    private function notRunningErrorMessage($error = '')
+    {
+        return "Seems like that Selenium is not running. To run Selenium issue this command:\n" .
+               "    java -Dweb.gecko.driver=/path/to/geckodriver" .
+               "-Dwebdriver.chrome.driver=/path/to/chromedriver -jar /path/to/selenium-server-standalone-*.jar\n" .
+               "Make sure to pass -jar argument as the last argument, or you will encounter " .
+               "\"Unknown option\" exception in newer versions of Selenium.\n\n" . $error;
     }
 }
