@@ -326,6 +326,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Alias for press().
+     *
+     * @param string $key Key to press.
+     *
+     * @return $this
+     */
+    public function hit($key)
+    {
+        return $this->press($key);
+    }
+
+    /**
      * Hits enter.
      *
      * @return $this
