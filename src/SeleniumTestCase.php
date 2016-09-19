@@ -32,6 +32,7 @@
 // - submitForm()
 // - Touch events
 // - Add example tests
+// - Cookie assertions
 
 namespace Sepehr\PHPUnitSelenium;
 
