@@ -31,6 +31,7 @@
 // - updateUrl() wait issue
 // - submitForm()
 // - Touch events
+// - Add example tests
 
 namespace Sepehr\PHPUnitSelenium;
 
