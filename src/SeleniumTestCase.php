@@ -124,7 +124,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
                 );
             } catch (WebDriverCurlException $e) {
                 throw new WebDriverCurlException(
-                    $this->notRunningMessage($e->getMessage())
+                    $this->seleniumNotRunningMessage($e->getMessage())
                 );
             }
         }
@@ -308,13 +308,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Hits a single key, hardly.
      *
-     * @param string $key Key to press.
+     * @param string $key Key to hit.
      *
      * @return $this
      * @throws \Exception
      * @see WebDriverKeys
      */
-    public function press($key)
+    public function hit($key)
     {
         $const = WebDriverKeys::class . '::' . strtoupper($key);
 
@@ -326,15 +326,15 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Alias for press().
+     * Alias for hit().
      *
-     * @param string $key Key to press.
+     * @param string $key Key to hit.
      *
      * @return $this
      */
-    public function hit($key)
+    public function press($key)
     {
-        return $this->press($key);
+        return $this->hit($key);
     }
 
     /**
@@ -344,7 +344,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function enter()
     {
-        return $this->press('enter');
+        return $this->hit('enter');
     }
 
     /**
@@ -354,7 +354,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function esc()
     {
-        return $this->press('escape');
+        return $this->hit('escape');
     }
 
     /**
@@ -364,7 +364,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function tab()
     {
-        return $this->press('tab');
+        return $this->hit('tab');
     }
 
     /**
@@ -374,7 +374,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function backspace()
     {
-        return $this->press('backspace');
+        return $this->hit('backspace');
     }
 
     /**
@@ -683,7 +683,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    private function notRunningMessage($original = '')
+    private function seleniumNotRunningMessage($original = '')
     {
         return "Seems like that Selenium is not running. To run Selenium issue this command:\n" .
                "    java -Dweb.gecko.driver=/path/to/geckodriver" .
