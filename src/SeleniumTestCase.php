@@ -22,12 +22,13 @@
 // - Unit tests
 // - assertElementExists(), seeElement()
 // - assertElementCount()
+// - assertElementNotFound(), dontSeeElement()
 // - Find child elements
 // - assertHasChild(), seeChildElement()
 // - Support for multiple elements ($this->element)
 // - Better error messages
 // - Public API to be protected, otherwise private
-// - wait(), waitForElement()
+// - wait(), waitForElement(), waitForUserInput()
 // - updateUrl() wait issue
 // - submitForm()
 // - Touch events
