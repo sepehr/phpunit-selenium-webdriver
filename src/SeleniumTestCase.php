@@ -442,7 +442,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         }
 
         try {
-            $this->findByText($criteria);
+            $this->findByLinkText($criteria);
         } catch (NoSuchElementException $e) {
             try {
                 $this->findByName($criteria);
@@ -451,7 +451,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
                     $this->findBySelector($criteria);
                 } catch (NoSuchElementException $e) {
                     try {
-                        $this->findByPartialText($criteria);
+                        $this->findByLinkPartialText($criteria);
                     } catch (NoSuchElementException $e) {
                         throw new NoSuchElementException(
                             "Unable to find an element with link text, partial link text, name or selector: $criteria"
@@ -474,18 +474,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     public function findBy(WebDriverBy $by)
     {
         return $this->setElement($this->webDriver->findElement($by));
-    }
-
-    /**
-     * Find an element by its link text.
-     *
-     * @param string $text
-     *
-     * @return $this
-     */
-    public function findByText($text)
-    {
-        return $this->findBy(WebDriverBy::linkText($text));
     }
 
     /**
@@ -516,37 +504,101 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * Find an element by its value.
      *
      * @param string $value Value to check for.
+     * @param string $element Target element tag.
      * @param bool $strict Strict comparison or not.
      *
      * @return $this
      */
-    public function findByValue($value, $strict = true)
+    public function findByValue($value, $element = '*', $strict = true)
     {
-        try {
-            $op = $strict ? '=' : '*=';
+        $op = $strict ? '=' : '*=';
 
-            return $this->findBySelector("input[value$op'$value'], textarea[value$op'$value']");
-        } catch (NoSuchElementException $e) {
-            $op = $strict ? "text()='$value'" : "contains(text(), '$value')";
-
-            try {
-                return $this->findByXpath("//button[$op]");
-            } catch (NoSuchElementException $e) {
-                return $this->findByXpath("//textarea[$op]");
-            }
-        }
+        return $this->findBySelector("{$element}[value$op'$value']");
     }
 
     /**
      * Find an element by its containing value.
      *
      * @param string $value Value to check for.
+     * @param string $element Target element tag.
      *
      * @return $this
      */
-    public function findByContainingValue($value)
+    public function findByContainingValue($value, $element = '*')
     {
-        return $this->findByValue($value, false);
+        return $this->findByValue($value, $element, false);
+    }
+
+    /**
+     * Find an element by its text.
+     *
+     * @param string $text Text to check for.
+     * @param string $element Target element tag.
+     * @param bool $strict Strict comparison or not.
+     *
+     * @return $this
+     */
+    public function findByText($text, $element = '*', $strict = true)
+    {
+        $op = $strict ? "text()='$text'" : "contains(text(), '$text')";
+
+        return $this->findByXpath("//{$element}[$op]");
+    }
+
+    /**
+     * Find an element by its containing text.
+     *
+     * @param string $text Text to check for.
+     * @param string $element Target element tag.
+     *
+     * @return $this
+     */
+    public function findByContainingText($text, $element = '*')
+    {
+        return $this->findByText($text, $element, false);
+    }
+
+    /**
+     * Find an element by its text or value.
+     *
+     * @param string $criteria Text or value to check for.
+     * @param string $element Target element tag.
+     * @param bool $strict Strict comparison or not.
+     *
+     * @return $this
+     */
+    public function findByTextOrValue($criteria, $element = '*', $strict = true)
+    {
+        try {
+            return $this->findByValue($criteria, $element, $strict);
+        } catch (NoSuchElementException $e) {
+            return $this->findByText($criteria, $element, $strict);
+        }
+    }
+
+    /**
+     * Find an element by its containing text or value.
+     *
+     * @param string $criteria Text or value to check for.
+     * @param string $element Target element tag.
+     *
+     * @return $this
+     */
+    public function findByContainingTextOrValue($criteria, $element = '*')
+    {
+        return $this->findByTextOrValue($criteria, $element, false);
+    }
+
+    /**
+     * Find an element by its link text.
+     *
+     * @param string $text
+     *
+     * @return $this
+     */
+    public function findByLinkText($text)
+    {
+        return $this->findBy(WebDriverBy::linkText($text));
     }
 
     /**
@@ -556,7 +608,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function findByPartialText($partialText)
+    public function findByLinkPartialText($partialText)
     {
         return $this->findBy(WebDriverBy::cssSelector($partialText));
     }
