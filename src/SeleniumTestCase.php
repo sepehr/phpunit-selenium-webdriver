@@ -34,6 +34,7 @@
 // - Touch events
 // - Add example tests
 // - Cookie assertions
+// - API: $this->find('.fewElements')->first()/nth()
 
 namespace Sepehr\PHPUnitSelenium;
 
@@ -488,19 +489,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find an element by its value.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function findByValue($value)
-    {
-        // @TODO: Implement.
-    }
-
-
-    /**
      * Find an element by its name attribute.
      *
      * @param string $name
@@ -522,6 +510,43 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     public function findBySelector($selector)
     {
         return $this->findBy(WebDriverBy::cssSelector($selector));
+    }
+
+    /**
+     * Find an element by its value.
+     *
+     * @param string $value Value to check for.
+     * @param bool $strict Strict comparison or not.
+     *
+     * @return $this
+     */
+    public function findByValue($value, $strict = true)
+    {
+        try {
+            $op = $strict ? '=' : '*=';
+
+            return $this->findBySelector("input[value$op'$value'], textarea[value$op'$value']");
+        } catch (NoSuchElementException $e) {
+            $op = $strict ? "text()='$value'" : "contains(text(), '$value')";
+
+            try {
+                return $this->findByXpath("//button[$op]");
+            } catch (NoSuchElementException $e) {
+                return $this->findByXpath("//textarea[$op]");
+            }
+        }
+    }
+
+    /**
+     * Find an element by its containing value.
+     *
+     * @param string $value Value to check for.
+     *
+     * @return $this
+     */
+    public function findByContainingValue($value)
+    {
+        return $this->findByValue($value, false);
     }
 
     /**
