@@ -593,36 +593,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Hits escape.
-     *
-     * @return $this
-     */
-    public function esc()
-    {
-        return $this->hit('escape');
-    }
-
-    /**
-     * Hits tab.
-     *
-     * @return $this
-     */
-    public function tab()
-    {
-        return $this->hit('tab');
-    }
-
-    /**
-     * Hits backspace.
-     *
-     * @return $this
-     */
-    public function backspace()
-    {
-        return $this->hit('backspace');
-    }
-
-    /**
      * Click on an element.
      *
      * @param string|null $element Text, name or selector of the element.
