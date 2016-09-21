@@ -617,7 +617,10 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Submit an element.
+     * Submit a form using one of its containing elements.
+     *
+     * If this current element is a form, or an element within a form, then this
+     * will be submitted to the remote server.
      *
      * @param string|null $element Text, name or selector of the element.
      *
@@ -625,7 +628,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function submit($element = null)
     {
-        return $this->elementAction('clear', $element, true);
+        return $this->elementAction('submit', $element, true);
     }
 
     /**
