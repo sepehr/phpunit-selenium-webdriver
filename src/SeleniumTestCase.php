@@ -3,6 +3,7 @@
 // TODOs:
 // - Automagically run selenium
 // - Extract to traits: InteractsWithPageElements, InteractWithForms, InteractWithInputs, InteractsWithWhateverTheFuck
+// - Rethink traits: http://codereview.stackexchange.com/questions/74077
 // - Adhere to some fuckin Contract
 // - Parse an optional selenium.json config
 // - Develop Laravel fluent testing API (see InteractsWithPages trait)
