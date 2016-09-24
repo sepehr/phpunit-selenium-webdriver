@@ -1,42 +1,5 @@
 <?php
 
-// TODOs:
-// - Automagically run selenium
-// - Extract to traits: InteractsWithPageElements, InteractWithForms, InteractWithInputs, InteractsWithWhateverTheFuck
-// - Rethink traits: http://codereview.stackexchange.com/questions/74077
-// - Adhere to some fuckin Contract
-// - Parse an optional selenium.json config
-// - Develop Laravel fluent testing API (see InteractsWithPages trait)
-// - PHPUnit assertBullshit* testing API
-// - Review Codeception acceptance testing API
-// - Method aliases (click, touch, andClick, etc.)
-// - Class alias (PHPUnit_Extension_SeleniumWebDriverTestCase)
-// - Typehint the fuck out of it
-// - User-friendly error messages
-// - Detect if Selenium is running
-// - Detect if Selenium browser driver is present
-// - Exceptions
-// - Format docblocks
-// - Log last response into file
-// - DesiredCapabilities
-// - Unified getter naming
-// - Unit tests
-// - assertElementExists(), seeElement()
-// - assertElementCount()
-// - assertElementNotFound(), dontSeeElement()
-// - Find child elements
-// - assertHasChild(), seeChildElement()
-// - Support for multiple elements ($this->element)
-// - Better error messages
-// - Public API to be protected, otherwise private
-// - wait(), waitForElement(), waitForUserInput()
-// - updateUrl() wait issue
-// - submitForm()
-// - Touch events
-// - Add example tests
-// - Cookie assertions
-// - API: $this->find('.fewElements')->first()/nth()
-
 namespace Sepehr\PHPUnitSelenium;
 
 use Facebook\WebDriver\WebDriverBy;
@@ -47,7 +10,7 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
-use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Exception\NoSuchElementException as NoSuchElement;
 
 abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -57,7 +20,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @var \Facebook\WebDriver\Remote\RemoteWebDriver
      */
-    protected $webDriver;
+    protected $driver;
 
     /**
      * Browser name.
@@ -100,7 +63,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @return $this
      * @after
      */
-    protected function tearDownWebDriver()
+    protected function tearDownDriver()
     {
         return $this->destroySession();
     }
@@ -119,9 +82,9 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function createSession($force = false)
     {
-        if ($force or ! $this->webDriverLoaded()) {
+        if ($force or ! $this->driverLoaded()) {
             try {
-                $this->webDriver = RemoteWebDriver::create(
+                $this->driver = RemoteWebDriver::create(
                     $this->host,
                     $this->desiredCapabilities()
                 );
@@ -142,8 +105,8 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function destroySession()
     {
-        if ($this->webDriver instanceof RemoteWebDriver) {
-            $this->webDriver->quit();
+        if ($this->driver instanceof RemoteWebDriver) {
+            $this->driver->quit();
         }
 
         return $this;
@@ -157,6 +120,16 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected function url()
     {
         return $this->currentUrl;
+    }
+
+    /**
+     * Return webdriver's current URL.
+     *
+     * @return string
+     */
+    protected function driverUrl()
+    {
+        return $this->driver->getCurrentURL();
     }
 
     /**
@@ -186,7 +159,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         // for the URL to be updated. Any better ideas?!
         $this->wait();
 
-        $this->setUrl($this->webDriver->getCurrentURL());
+        $this->setUrl($this->driverUrl());
 
         return $this;
     }
@@ -209,7 +182,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Set current element;
+     * Set current element.
      *
      * @param RemoteWebElement $element
      *
@@ -223,10 +196,22 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Execute a command on current element.
+     * Returns current element.
+     *
+     * @return RemoteWebElement
+     */
+    protected function getElement()
+    {
+        return $this->element;
+    }
+
+    /**
+     * Execute a command on the current element.
+     *
+     * Proxies actions to current RemoteWebElement object with some initial housekeepings.
      *
      * @param string|array $action Action(s) to be executed on element.
-     * @param null|string $element Element to execute the action on.
+     * @param null|string $element Element criteria to execute the action on.
      * @param bool $changesUrl Whether the action might change the URL or not.
      *
      * @return $this
@@ -264,17 +249,17 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Visit a URL.
      *
-     * @param string $path URL to visit.
+     * @param string $url URL to visit.
      *
      * @return $this
      */
-    public function visit($path = '/')
+    public function visit($url = '/')
     {
         $this->createSession();
 
-        $this->setUrl($path);
+        $this->setUrl($url);
 
-        $this->webDriver->get($this->url());
+        $this->driver->get($this->url());
 
         $this->updateUrl();
 
@@ -328,33 +313,44 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Tries to find an element by its text, partial text, name or selector.
+     * Tries to find an element by examining CSS selector, name, value or text.
      *
-     * @param string $criteria Element text, partial text, name or selector.
+     * Examination order:
+     * 1. CSS selector
+     * 2. Name
+     * 3. Value
+     * 4. Text
+     *
+     * NOTE:
+     * This is an expensive method; Prefer to utilize explicit find
+     * methods instead unless operating in "whadeva" mode!
+     *
+     * @param string|RemoteWebElement $criteria Element criteria.
      *
      * @return $this
-     * @throws NoSuchElementException
+     * @throws NoSuchElement
+     * @see findBySelector(), findByName(), findByValue(), findByText()
      */
     public function find($criteria)
     {
-        if ($criteria instanceof RemoteWebElement) {
+        if ($this->isElement($criteria)) {
             return $this->setElement($criteria);
         }
 
         try {
-            $this->findByLinkText($criteria);
-        } catch (NoSuchElementException $e) {
+            $this->findBySelector($criteria);
+        } catch (NoSuchElement $e) {
             try {
                 $this->findByName($criteria);
-            } catch (NoSuchElementException $e) {
+            } catch (NoSuchElement $e) {
                 try {
-                    $this->findBySelector($criteria);
-                } catch (NoSuchElementException $e) {
+                    $this->findByValue($criteria);
+                } catch (NoSuchElement $e) {
                     try {
-                        $this->findByLinkPartialText($criteria);
-                    } catch (NoSuchElementException $e) {
-                        throw new NoSuchElementException(
-                            "Unable to find an element with link text, partial link text, name or selector: $criteria"
+                        $this->findByText($criteria);
+                    } catch (NoSuchElement $e) {
+                        throw new NoSuchElement(
+                            "Unable to find an element with CSS selector, name, value or text: $criteria"
                         );
                     }
                 }
@@ -373,7 +369,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function findBy(WebDriverBy $by)
     {
-        return $this->setElement($this->webDriver->findElement($by));
+        return $this->setElement($this->driver->findElement($by));
     }
 
     /**
@@ -424,7 +420,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function findByContainingValue($value, $element = '*')
+    public function findByPartialValue($value, $element = '*')
     {
         return $this->findByValue($value, $element, false);
     }
@@ -453,7 +449,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function findByContainingText($text, $element = '*')
+    public function findByPartialText($text, $element = '*')
     {
         return $this->findByText($text, $element, false);
     }
@@ -471,7 +467,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         try {
             return $this->findByValue($criteria, $element, $strict);
-        } catch (NoSuchElementException $e) {
+        } catch (NoSuchElement $e) {
             return $this->findByText($criteria, $element, $strict);
         }
     }
@@ -484,7 +480,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function findByContainingTextOrValue($criteria, $element = '*')
+    public function findByPartialTextOrValue($criteria, $element = '*')
     {
         return $this->findByTextOrValue($criteria, $element, false);
     }
@@ -510,7 +506,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function findByLinkPartialText($partialText)
     {
-        return $this->findBy(WebDriverBy::cssSelector($partialText));
+        return $this->findBy(WebDriverBy::partialLinkText($partialText));
     }
 
     /**
@@ -541,7 +537,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * Types into an element.
      *
      * @param string $text Text to type into the element.
-     * @param string|null $element Text, name or selector of the element.
+     * @param string|null $element Element criteria.
      *
      * @return $this
      */
@@ -595,7 +591,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Click on an element.
      *
-     * @param string|null $element Text, name or selector of the element.
+     * @param string|null $element Element criteria.
      *
      * @return $this
      */
@@ -605,9 +601,21 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Alias for click().
+     *
+     * @param string|null $element Element criteria.
+     *
+     * @return $this
+     */
+    public function follow($element = null)
+    {
+        return $this->click($element);
+    }
+
+    /**
      * Alias for click() with mandatory element.
      *
-     * @param string|null $element Text, name or selector of the element.
+     * @param string|null $element Element criteria.
      *
      * @return $this
      */
@@ -617,12 +625,24 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Clear an element, if a textarea or an input.
+     *
+     * @param string|null $element Element criteria.
+     *
+     * @return $this
+     */
+    public function clear($element = null)
+    {
+        return $this->elementAction('clear', $element);
+    }
+
+    /**
      * Submit a form using one of its containing elements.
      *
      * If this current element is a form, or an element within a form, then this
      * will be submitted to the remote server.
      *
-     * @param string|null $element Text, name or selector of the element.
+     * @param string|null $element Element criteria.
      *
      * @return $this
      */
@@ -632,15 +652,28 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Clear an element, if a textarea or an input.
+     * Submit a form.
      *
-     * @param string|null $element Text, name or selector of the element.
+     * @param string|null $form Form selector, name or its submit button text.
+     * @param array $formData Array of name/value pairs as form data for submission.
      *
      * @return $this
+     * @throws NoSuchElement
      */
-    public function clear($element = null)
+    public function submitForm($form = null, $formData = [])
     {
-        return $this->elementAction('clear', $element);
+        try {
+            $form = $this->find($form);
+        } catch (NoSuchElement $e) {
+            throw new NoSuchElement("Could not find the form with selector, name or button text: $form");
+        }
+
+        foreach ($formData as $name => $value) {
+            $this->findByName($name)
+                 ->type($value);
+        }
+
+        // @TODO: Continue the implementation...
     }
 
     // ----------------------------------------------------------------------------
@@ -707,6 +740,11 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     private function normalizeUrl($path)
     {
+        // Consider file:/// URLs as normalized
+        if (strpos($path, 'file:///') === 0) {
+            return $path;
+        }
+
         if ($path[0] === '/') {
             $path = substr($path, 1);
         }
@@ -723,9 +761,21 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return bool
      */
-    private function webDriverLoaded()
+    private function driverLoaded()
     {
-        return $this->webDriver instanceof RemoteWebDriver;
+        return $this->driver instanceof RemoteWebDriver;
+    }
+
+    /**
+     * Checks whether it's a valid RemoteWebElement or not.
+     *
+     * @param mixed $godKnowsWhatTheFuck Thing to check.
+     *
+     * @return bool
+     */
+    private function isElement($godKnowsWhatTheFuck)
+    {
+        return $godKnowsWhatTheFuck instanceof RemoteWebElement;
     }
 
     /**
