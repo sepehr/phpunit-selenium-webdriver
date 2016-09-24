@@ -8,11 +8,30 @@ abstract class BaseSeleniumTestCase extends SeleniumTestCase
 {
 
     /**
+     * Holds test file title.
+     *
+     * @var string
+     */
+    protected $testFileTitle = 'Test page for phpunit-selenium-webdriver';
+
+    /**
      * Browser name.
      *
      * @var string
      */
     protected $browser = 'firefox';
+
+    /**
+     * Returns the full path to html test file.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    protected function getTestFilePath($path)
+    {
+        return __DIR__ . "/html/$path";
+    }
 
     /**
      * Returns the URL to html test file.
@@ -23,6 +42,18 @@ abstract class BaseSeleniumTestCase extends SeleniumTestCase
      */
     protected function getTestFileUrl($path)
     {
-        return 'file:///' . __DIR__ . "/html/$path";
+        return 'file:///' . $this->getTestFilePath($path);
+    }
+
+    /**
+     * Visits a test file.
+     *
+     * @param string $path
+     *
+     * @return $this
+     */
+    protected function visitTestFile($path = 'test.html')
+    {
+        return $this->visit($this->getTestFileUrl($path));
     }
 }
