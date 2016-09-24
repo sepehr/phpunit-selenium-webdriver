@@ -2,6 +2,7 @@
 
 namespace Sepehr\PHPUnitSelenium;
 
+use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
 use Facebook\WebDriver\WebDriverPlatform;
@@ -203,6 +204,26 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected function getElement()
     {
         return $this->element;
+    }
+
+    /**
+     * Returns current page's title.
+     *
+     * @return string
+     */
+    protected function getPageTitle()
+    {
+        return $this->driver->getTitle();
+    }
+
+    /**
+     * Returns current page's source.
+     *
+     * @return string
+     */
+    protected function getPageSource()
+    {
+        return $this->driver->getPageSource();
     }
 
     /**
@@ -683,48 +704,221 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Assert that the page URL matches the given URL.
      *
-     * @param string $url URL to check.
-     * @param string $message PHPUnit error message.
-     * @param bool $negate Negate the check?
+     * @param string $url
+     * @param string $message
+     * @param bool $negate
      *
      * @return $this
      */
     public function assertPageIs($url, $message = '', $negate = false)
     {
         $url = $this->normalizeUrl($url);
-        $method = $negate ? 'assertNotEquals' : 'assertEquals';
+        $method = $this->getAssertionMethod('assertEquals', $negate);
 
         $this->$method($url, $this->url(), $message);
 
         return $this;
     }
 
-    // ----------------------------------------------------------------------------
-    // Laravelish Assertions
-    // ----------------------------------------------------------------------------
-
     /**
      * Assert that the page URL matches the given URL.
      *
-     * @param string $url Url to check.
+     * @param string $url
      *
      * @return $this
      */
     public function seePageIs($url)
     {
-        return $this->assertPageIs($url, "Failed asserting that the current page is: $url");
+        return $this->assertPageIs(
+            $url,
+            "Failed asserting that the current page is: $url"
+        );
     }
 
     /**
-     * Assert that the page URL does not matche the given URL.
+     * Assert that the page URL does not match the given URL.
      *
-     * @param string $url Url to check.
+     * @param string $url
      *
      * @return $this
      */
     public function dontSeePageIs($url)
     {
-        return $this->assertPageIs($url, "Failed asserting that the current page is NOT: $url", true);
+        return $this->assertPageIs(
+            $url,
+            "Failed asserting that the current page is NOT: $url",
+            true
+        );
+    }
+
+    /**
+     * Assert that the page source contains the specified text.
+     *
+     * @param string $text
+     * @param string $message
+     * @param bool $negate
+     *
+     * @return $this
+     */
+    public function assertPageContains($text, $message = '', $negate = false)
+    {
+        $text = preg_quote($text, '/');
+        $method = $this->getAssertionMethod('assertRegExp', $negate);
+
+        $this->$method("/{$text}/i", $this->getPageSource(), $message);
+
+        return $this;
+    }
+
+    /**
+     * Asserts that the page source contains the specified text.
+     *
+     * @param string $text
+     *
+     * @return $this
+     */
+    public function see($text)
+    {
+        return $this->assertPageContains(
+            $text,
+            "Failed asserting that the current page source contains: $text"
+        );
+    }
+
+    /**
+     * Asserts that the page source does NOT contain the specified text.
+     *
+     * @param string $text
+     *
+     * @return $this
+     */
+    public function dontSee($text)
+    {
+        return $this->assertPageContains(
+            $text,
+            "Failed asserting that the current page source does NOT contain: $text",
+            true
+        );
+    }
+
+    /**
+     * Assert that the page title matches the given string.
+     *
+     * @param string $title
+     * @param string $message
+     * @param bool $negate
+     *
+     * @return $this
+     */
+    public function assertTitleIs($title, $message = '', $negate = false)
+    {
+        $method = $this->getAssertionMethod('assertEquals', $negate);
+
+        $this->$method($title, $this->getPageTitle(), $message);
+
+        return $this;
+    }
+
+    /**
+     * Assert that the page title matches the given string.
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function seeTitle($title)
+    {
+        return $this->assertTitleIs(
+            $title,
+            "Failed asserting that the current page title is: $title"
+        );
+    }
+
+    /**
+     * Assert that the page title does not matche the given string.
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function dontSeeTitle($title)
+    {
+        return $this->assertTitleIs(
+            $title,
+            "Failed asserting that the current page title is NOT: $title",
+            true
+        );
+    }
+
+    /**
+     * Assert that the page title contains the given string.
+     *
+     * @param string $title
+     * @param string $message
+     * @param bool $negate
+     *
+     * @return $this
+     */
+    public function assertTitleContains($title, $message = '', $negate = false)
+    {
+        $method = $this->getAssertionMethod('assertContains', $negate);
+
+        $this->$method($title, $this->getPageTitle(), $message);
+
+        return $this;
+    }
+
+    /**
+     * Assert that the page title contains the given string.
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function seeTitleContains($title)
+    {
+        return $this->assertTitleContains(
+            $title,
+            "Failed asserting that the current page title contains: $title"
+        );
+    }
+
+    /**
+     * Assert that the page title does not contain the given string.
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function dontSeeTitleContains($title)
+    {
+        return $this->assertTitleContains(
+            $title,
+            "Failed asserting that the current page title does NOT contain: $title",
+            true
+        );
+    }
+
+    /**
+     * Asserts that an element exists on the current page.
+     *
+     * @param string $element
+     * @param string $message
+     * @param bool $negate
+     */
+    public function assertElementExists($element, $message = '', $negate = false)
+    {
+        //
+    }
+
+    public function seeElement($element)
+    {
+        //
+    }
+
+    public function dontSeeElement($element)
+    {
+        //
     }
 
     // ----------------------------------------------------------------------------
@@ -776,6 +970,25 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     private function isElement($godKnowsWhatTheFuck)
     {
         return $godKnowsWhatTheFuck instanceof RemoteWebElement;
+    }
+
+    /**
+     * Returns proper PHPUnit assertion method name depending on $negate.
+     *
+     * @param string $method
+     * @param bool $negate
+     *
+     * @return string
+     */
+    private function getAssertionMethod($method, $negate)
+    {
+        $negates = [
+            'assertEquals'   => 'assertNotEquals',
+            'assertRegExp'   => 'assertNotRegExp',
+            'assertContains' => 'assertNotContains',
+        ];
+
+        return $negate ? $negates[$method] : $method;
     }
 
     /**
