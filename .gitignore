@@ -1,0 +1,11 @@
+composer.phar
+composer.lock
+vendor
+.php_cs.cache
+
+*.lock
+*.DS_Store
+*~
+*.swp
+.idea
+
