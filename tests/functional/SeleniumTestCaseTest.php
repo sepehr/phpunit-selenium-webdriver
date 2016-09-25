@@ -386,14 +386,4 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
             ['//*[@id="main"]/section[1]/p', 'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.'],
         ];
     }
-
-    public function testShit()
-    {
-        $el = $this->visitTestFile()->find('//*[@id="main"]/section[1]/p');
-
-        $this->assertEquals(
-            'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
-            $el->getText()
-        );
-    }
 }
