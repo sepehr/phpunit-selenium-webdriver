@@ -569,6 +569,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Alias for findByText()
+     *
+     * @param array $args
+     *
+     * @return RemoteWebElement|\Facebook\WebDriver\Remote\RemoteWebElement[]
+     */
+    public function findByBody(...$args)
+    {
+        return $this->findByText(...$args);
+    }
+
+    /**
      * Find an element by its containing text.
      *
      * @param string $text Text to check for.
@@ -701,14 +713,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Alias for hit().
      *
-     * @param string $key Key to hit.
-     * @param string|RemoteWebElement $locator Element locator.
+     * @param array $args
      *
      * @return $this
      */
-    public function press($key, $locator)
+    public function press(...$args)
     {
-        return $this->hit($key, $locator);
+        return $this->hit(...$args);
     }
 
     /**
@@ -738,13 +749,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Alias for click().
      *
-     * @param string|RemoteWebElement $locator Element locator.
+     * @param array $args
      *
      * @return $this
      */
-    public function follow($locator)
+    public function follow(...$args)
     {
-        return $this->click($locator);
+        return $this->click(...$args);
     }
 
     /**
