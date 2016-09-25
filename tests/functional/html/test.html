@@ -18,7 +18,7 @@
             margin-bottom: 100px;
         }
         h2, ul li {
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -39,48 +39,73 @@
                 </section>
 
                 <section>
+                    <h2>Links</h2>
+
+                    <p>Here's some links to play with:</p>
+
+                    <ul>
+                        <li>
+                            <a href="https://github.com/sepehr/phpunit-selenium-webdriver">View on github</a>
+                        </li>
+
+                        <li>
+                            <a href="http://www.seleniumhq.org" target="_blank">SeleniumHQ</a>
+                        </li>
+                    </ul>
+                </section>
+
+                <section>
                     <h2>Finding Elements</h2>
 
                     <ul>
                         <li class="findMeByClass">
-                            This element can be found by <code>.findMeByClass</code> class.
+                            This element can be found by this class: findMeByClass
+                        </li>
+
+                        <li class="findMeByClass">
+                            This second element can also be found by the same class: findMeByClass
                         </li>
 
                         <li id="findMeById">
-                            This element can be found by <code>#findMeById</code> CSS selector.
+                            This element can be found by its ID: findMeById
                         </li>
 
                         <li>
-                            This input can be found by its name <code>findMeByName</code>:
+                            This input can be found by its name: findMeByName
                             <br><br>
-                            <input class="form-control" name="findMeByName" placeholder="Find me by my name :)">
+                            <input class="form-control" name="findMeByName" placeholder="findMeByMyPlaceholder">
                         </li>
 
                         <li>
-                            This input can be found by its current value <code>findMeByValue</code>:
+                            This input can be found by its current value: findInputByValue
                             <br><br>
-                            <input class="form-control" value="findMeByValue" placeholder="Find me by my value :)">
+                            <input class="form-control" value="findInputByValue" placeholder="">
                         </li>
 
                         <li>
-                            This textarea can be found by its text <code>findTextareaByText</code>:
+                            This textarea can be found by its text: findTextareaByText
                             <br><br>
-                            <textarea class="form-control" rows="3">findTextareaByText</textarea>
+                            <textarea class="form-control" rows="3" placeholder="">findTextareaByText</textarea>
                         </li>
 
                         <li>
-                            This button can be found by its text <code>findButtonByText</code>:
+                            This button can be found by its text: findButtonByText
                             <br><br>
                             <button class="btn btn-primary">findButtonByText</button>
                         </li>
 
                         <li>
+                            <span>This span can be found by its text, too.</span>
+                        </li>
+
+                        <li>
                             Every option of this select element can be found by their value
-                            (<code>option1, option2</code>) or text (<code>Option I, Option II</code>):
+                            (<code>findOptionByValue-1, findOptionByValue-2</code>) or text
+                            (<code>Option I, Option II</code>):
                             <br><br>
                             <select class="form-control">
-                                <option value="option1">Option I</option>
-                                <option value="option2">Option II</option>
+                                <option value="findOptionByValue-1">Option I</option>
+                                <option value="findOptionByValue-2">Option II</option>
                             </select>
                         </li>
                     </ul>
