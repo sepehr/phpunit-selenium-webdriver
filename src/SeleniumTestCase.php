@@ -625,6 +625,26 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Finds elements by ID or name.
+     *
+     * @param string $criteria Name or ID to check for.
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    public function findByNameOrId($criteria)
+    {
+        $criteria[0] === '#' and $criteria = substr($criteria, 1);
+
+        $elements = $this->findByName($criteria);
+
+        if (empty($elements)) {
+            $elements = $this->findById($criteria);
+        }
+
+        return $elements;
+    }
+
+    /**
      * Find an element by its link text.
      *
      * @param string $text

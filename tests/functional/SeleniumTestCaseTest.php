@@ -215,6 +215,20 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     }
 
     /** @test */
+    public function findsElementByNameOrId()
+    {
+        $this->visitTestFile();
+
+        $criteria = 'findMeById';
+
+        $this->assertSame($criteria, $this->findByNameOrId($criteria)->getAttribute('id'));
+
+        $criteria = 'findMeByName';
+
+        $this->assertSame($criteria, $this->findByNameOrId($criteria)->getAttribute('name'));
+    }
+
+    /** @test */
     public function findsLinkByItsText()
     {
         $element = $this->visitTestFile()
