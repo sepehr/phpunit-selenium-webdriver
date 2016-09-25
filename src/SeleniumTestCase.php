@@ -2,7 +2,6 @@
 
 namespace Sepehr\PHPUnitSelenium;
 
-use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
 use Facebook\WebDriver\WebDriverPlatform;
@@ -11,7 +10,11 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
-use Facebook\WebDriver\Exception\NoSuchElementException as NoSuchElement;
+use Facebook\WebDriver\Exception\NoSuchElementException;
+
+use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
+use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
 
 abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -19,7 +22,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Instance of RemoteWebDriver.
      *
-     * @var \Facebook\WebDriver\Remote\RemoteWebDriver
+     * @var RemoteWebDriver
      */
     protected $driver;
 
@@ -52,11 +55,32 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected $host = 'http://localhost:4444/wd/hub';
 
     /**
-     * Current element.
+     * Webdriver connection timeout.
      *
-     * @var RemoteWebElement
+     * @var int
      */
-    protected $element;
+    protected $connectionTimeout = 30000;
+
+    /**
+     * Webdriver cURL request timeout.
+     *
+     * @var int
+     */
+    protected $requestTimeout = 90000;
+
+    /**
+     * Webdriver proxy host.
+     *
+     * @var string|null
+     */
+    protected $httpProxy = null;
+
+    /**
+     * Webdriver proxy port.
+     *
+     * @var int|null
+     */
+    protected $httpProxyPort = null;
 
     /**
      * Destroys webdriver session after the test.
@@ -79,7 +103,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param bool $force Whether to force a new session or to user the old one.
      *
      * @return $this
-     * @throws WebDriverCurlException
+     * @throws SeleniumNotRunning
      */
     protected function createSession($force = false)
     {
@@ -87,12 +111,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
             try {
                 $this->driver = RemoteWebDriver::create(
                     $this->host,
-                    $this->desiredCapabilities()
+                    $this->desiredCapabilities(),
+                    $this->connectionTimeout,
+                    $this->requestTimeout,
+                    $this->httpProxy,
+                    $this->httpProxyPort
                 );
             } catch (WebDriverCurlException $e) {
-                throw new WebDriverCurlException(
-                    $this->seleniumNotRunningMessage($e->getMessage())
-                );
+                throw new SeleniumNotRunning($e->getMessage());
             }
         }
 
@@ -183,27 +209,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Set current element.
+     * Returns webdriver instance.
      *
-     * @param RemoteWebElement $element
-     *
-     * @return $this
+     * @return RemoteWebDriver
      */
-    protected function setElement(RemoteWebElement $element)
+    protected function webDriver()
     {
-        $this->element = $element;
-
-        return $this;
-    }
-
-    /**
-     * Returns current element.
-     *
-     * @return RemoteWebElement
-     */
-    protected function getElement()
-    {
-        return $this->element;
+        return $this->driver;
     }
 
     /**
@@ -227,35 +239,84 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Execute a command on the current element.
+     * Returns a WebDriverBy instance.
      *
-     * Proxies actions to current RemoteWebElement object with some initial housekeepings.
+     * @param string $mechanism Valid mechanism.
+     * @param string $value
+     *
+     * @return WebDriverBy
+     * @throws InvalidArgument
+     * @see WebDriverBy
+     */
+    protected function getWebDriverByInstance($mechanism, $value = '')
+    {
+        if (! method_exists(WebDriverBy::class, $mechanism)) {
+            throw new InvalidArgument("Invalid WebDriverBy mechanism: $mechanism");
+        }
+
+        return WebDriverBy::$mechanism($value);
+    }
+
+    /**
+     * Returns the full class name for a valid element.
+     *
+     * @return string
+     */
+    protected function getValidElementClassName()
+    {
+        return RemoteWebElement::class;
+    }
+
+    /**
+     * Saves current page's source into file.
+     *
+     * @param string $filename
+     *
+     * @return $this
+     */
+    protected function savePageSource($filename)
+    {
+        file_put_contents($filename, $this->getPageSource());
+
+        return $this;
+    }
+
+    /**
+     * Execute a command on a set of elements.
+     *
+     * Proxies actions to RemoteWebElement with some initial housekeepings, if needed.
      *
      * @param string|array $action Action(s) to be executed on element.
-     * @param null|string $element Element criteria to execute the action on.
+     * @param string|RemoteWebElement|RemoteWebElement[] $target An element, array of elements or a locator.
      * @param bool $changesUrl Whether the action might change the URL or not.
      *
      * @return $this
-     * @throws \Exception
+     * @throws InvalidArgument
      */
-    protected function elementAction($action, $element = null, $changesUrl = false)
+    protected function elementAction($action, $target, $changesUrl = false)
     {
-        $element and $this->find($element);
+        $elements = $this->isLocator($target)
+            ? $this->find($target)
+            : $target;
 
-        if ( ! $this->element) {
-            throw new \Exception('No element is targeted to execute the action(s) on.');
+        if (! $this->isElement($elements)) {
+            throw new InvalidArgument('No element is targeted to execute the action(s) on.');
         }
 
         is_array($action) or $action = [$action => []];
+        is_array($elements) or $elements = [$elements];
 
-        foreach ($action as $method => $args) {
-            if ( ! method_exists($this->element, $method)) {
-                throw new \Exception("Invalid element action: $method");
+        // Execute all actions for each element
+        foreach ($elements as $element) {
+            foreach ($action as $method => $args) {
+                if (! method_exists($element, $method)) {
+                    throw new InvalidArgument("Invalid element action: $method");
+                }
+
+                is_array($args) or $args = [$args];
+
+                call_user_func_array([$element, $method], $args);
             }
-
-            is_array($args) or $args = [$args];
-
-            call_user_func_array([$this->element, $method], $args);
         }
 
         $changesUrl and $this->updateUrl();
@@ -310,7 +371,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $browser Browser name.
      *
      * @return $this
-     * @throws \Exception
      */
     public function browser($browser)
     {
@@ -339,58 +399,80 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * Examination order:
      * 1. CSS selector
      * 2. Name
-     * 3. Value
-     * 4. Text
+     * 3. ID
+     * 4. Value
+     * 5. Text
+     * 6. XPath
      *
      * NOTE:
      * This is an expensive method; Prefer to utilize explicit find
      * methods instead unless operating in "whadeva" mode!
      *
-     * @param string|RemoteWebElement $criteria Element criteria.
+     * @param string $locator Element locator.
      *
-     * @return $this
-     * @throws NoSuchElement
-     * @see findBySelector(), findByName(), findByValue(), findByText()
+     * @return RemoteWebElement|RemoteWebElement[]
+     * @see findBySelector(), findByName(), findById(), findByValue(), findByText(), findByXpath()
+     * @todo Guess the type of locator based on its format
      */
-    public function find($criteria)
+    public function find($locator)
     {
-        if ($this->isElement($criteria)) {
-            return $this->setElement($criteria);
-        }
+        $elements = $this->findBySelector($locator);
 
-        try {
-            $this->findBySelector($criteria);
-        } catch (NoSuchElement $e) {
-            try {
-                $this->findByName($criteria);
-            } catch (NoSuchElement $e) {
-                try {
-                    $this->findByValue($criteria);
-                } catch (NoSuchElement $e) {
-                    try {
-                        $this->findByText($criteria);
-                    } catch (NoSuchElement $e) {
-                        throw new NoSuchElement(
-                            "Unable to find an element with CSS selector, name, value or text: $criteria"
-                        );
+        if (empty($elements)) {
+            $elements = $this->findByName($locator);
+
+            if (empty($elements)) {
+                $elements = $this->findById($locator);
+
+                if (empty($elements)) {
+                    $elements = $this->findByValue($locator);
+
+                    if (empty($elements)) {
+                        $elements = $this->findByText($locator);
+
+                        if (empty( $elements )) {
+                            $elements = $this->findByXpath($locator);
+                        }
                     }
                 }
             }
         }
 
-        return $this;
+        return $elements;
     }
 
     /**
-     * Finds elements by a WebDriverBy instance.
+     * Finds multiple elements by a WebDriverBy instance.
      *
      * @param WebDriverBy $by
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findBy(WebDriverBy $by)
     {
-        return $this->setElement($this->driver->findElement($by));
+        $elements = $this->driver->findElements($by);
+
+        return empty($elements)
+            ? $elements
+            // Unwrap the container array if only one element
+            : (isset($elements[1]) ? $elements : $elements[0]);
+    }
+
+    /**
+     * Finds one element by a WebDriverBy instance.
+     *
+     * @param WebDriverBy $by
+     *
+     * @return RemoteWebElement
+     * @throws NoSuchElement
+     */
+    public function findOneBy(WebDriverBy $by)
+    {
+        try {
+            return $this->driver->findElement($by);
+        } catch (NoSuchElementException $e) {
+            throw new NoSuchElement($e);
+        }
     }
 
     /**
@@ -398,7 +480,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param string $name
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByName($name)
     {
@@ -410,11 +492,35 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param string $selector
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findBySelector($selector)
     {
         return $this->findBy(WebDriverBy::cssSelector($selector));
+    }
+
+    /**
+     * Find an element by its CSS class.
+     *
+     * @param string $class
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    public function findByClass($class)
+    {
+        return $this->findBySelector(".$class");
+    }
+
+    /**
+     * Find an element by its ID attribute.
+     *
+     * @param string $id
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    public function findById($id)
+    {
+        return $this->findBy(WebDriverBy::id($id));
     }
 
     /**
@@ -424,7 +530,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $element Target element tag.
      * @param bool $strict Strict comparison or not.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByValue($value, $element = '*', $strict = true)
     {
@@ -439,7 +545,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $value Value to check for.
      * @param string $element Target element tag.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByPartialValue($value, $element = '*')
     {
@@ -453,7 +559,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $element Target element tag.
      * @param bool $strict Strict comparison or not.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByText($text, $element = '*', $strict = true)
     {
@@ -468,7 +574,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $text Text to check for.
      * @param string $element Target element tag.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByPartialText($text, $element = '*')
     {
@@ -482,15 +588,15 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $element Target element tag.
      * @param bool $strict Strict comparison or not.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByTextOrValue($criteria, $element = '*', $strict = true)
     {
-        try {
-            return $this->findByValue($criteria, $element, $strict);
-        } catch (NoSuchElement $e) {
-            return $this->findByText($criteria, $element, $strict);
-        }
+        $elements = $this->findByText($criteria, $element, $strict);
+
+        return empty($elements)
+            ? $this->findByValue($criteria, $element, $strict)
+            : $elements;
     }
 
     /**
@@ -499,7 +605,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $criteria Text or value to check for.
      * @param string $element Target element tag.
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByPartialTextOrValue($criteria, $element = '*')
     {
@@ -511,7 +617,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param string $text
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByLinkText($text)
     {
@@ -523,7 +629,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param string $partialText
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByLinkPartialText($partialText)
     {
@@ -535,7 +641,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param $xpath
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByXpath($xpath)
     {
@@ -545,9 +651,9 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Find elements by tag name.
      *
-     * @param $tag
+     * @param string $tag
      *
-     * @return $this
+     * @return RemoteWebElement|RemoteWebElement[]
      */
     public function findByTag($tag)
     {
@@ -558,143 +664,153 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * Types into an element.
      *
      * @param string $text Text to type into the element.
-     * @param string|null $element Element criteria.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
      */
-    public function type($text, $element = null)
+    public function type($text, $locator)
     {
-        return $this->elementAction(['sendKeys' => $text], $element, true);
+        return $this->elementAction(['sendKeys' => $text], $locator, true);
     }
 
     /**
      * Hits a single key, hardly.
      *
      * @param string $key Key to hit.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
-     * @throws \Exception
+     * @throws InvalidArgument
      * @see WebDriverKeys
      */
-    public function hit($key)
+    public function hit($key, $locator)
     {
-        $const = WebDriverKeys::class . '::' . strtoupper($key);
+        if ($key[0] !== '\\') {
+            $const = WebDriverKeys::class . '::' . strtoupper($key);
 
-        if ( ! defined($const)) {
-            throw new \Exception("Invalid key: $key");
+            if ( ! defined($const)) {
+                throw new InvalidArgument("Invalid key: $key");
+            }
+
+            $key = constant($const);
         }
 
-        return $this->type(constant($const));
+        return $this->type($key, $locator);
     }
 
     /**
      * Alias for hit().
      *
      * @param string $key Key to hit.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
      */
-    public function press($key)
+    public function press($key, $locator)
     {
-        return $this->hit($key);
+        return $this->hit($key, $locator);
     }
 
     /**
      * Hits enter.
      *
+     * @param string|RemoteWebElement $locator Element locator.
+     *
      * @return $this
      */
-    public function enter()
+    public function enter($locator)
     {
-        return $this->hit('enter');
+        return $this->hit('enter', $locator);
     }
 
     /**
      * Click on an element.
      *
-     * @param string|null $element Element criteria.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
      */
-    public function click($element = null)
+    public function click($locator)
     {
-        return $this->elementAction('click', $element, true);
+        return $this->elementAction('click', $locator, true);
     }
 
     /**
      * Alias for click().
      *
-     * @param string|null $element Element criteria.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
      */
-    public function follow($element = null)
+    public function follow($locator)
     {
-        return $this->click($element);
-    }
-
-    /**
-     * Alias for click() with mandatory element.
-     *
-     * @param string|null $element Element criteria.
-     *
-     * @return $this
-     */
-    public function clickOn($element)
-    {
-        return $this->click($element);
+        return $this->click($locator);
     }
 
     /**
      * Clear an element, if a textarea or an input.
      *
-     * @param string|null $element Element criteria.
+     * @param string|RemoteWebElement $locator Element locator.
      *
      * @return $this
      */
-    public function clear($element = null)
+    public function clear($locator)
     {
-        return $this->elementAction('clear', $element);
+        return $this->elementAction('clear', $locator);
     }
 
     /**
-     * Submit a form using one of its containing elements.
+     * Fills a field.
      *
-     * If this current element is a form, or an element within a form, then this
-     * will be submitted to the remote server.
-     *
-     * @param string|null $element Element criteria.
+     * @param string|RemoteWebElement $locator Element locator.
+     * @param string $value
      *
      * @return $this
      */
-    public function submit($element = null)
+    public function fillField($locator, $value)
     {
-        return $this->elementAction('submit', $element, true);
+        return $this->type($value, $locator);
+    }
+
+    /**
+     * Fills a form.
+     *
+     * @param string|RemoteWebElement $locator Form element locator.
+     * @param array $formData Array of name/value pairs as form data for submission.
+     *
+     * @return $this
+     */
+    public function fillForm($locator, $formData = [])
+    {
+        // @TODO: Implement...
     }
 
     /**
      * Submit a form.
      *
-     * @param string|null $form Form selector, name or its submit button text.
-     * @param array $formData Array of name/value pairs as form data for submission.
+     * @param string|RemoteWebElement $locator Form element locator.
+     * @param array $formData Array of name/value pairs as per required by fillForm().
      *
      * @return $this
-     * @throws NoSuchElement
      */
-    public function submitForm($form = null, $formData = [])
+    public function submitForm($locator, $formData = [])
     {
-        try {
-            $form = $this->find($form);
-        } catch (NoSuchElement $e) {
-            throw new NoSuchElement("Could not find the form with selector, name or button text: $form");
-        }
+        // @TODO: Implement...
+    }
 
-        foreach ($formData as $name => $value) {
-            $this->findByName($name)
-                 ->type($value);
-        }
-
-        // @TODO: Continue the implementation...
+    /**
+     * Submit a form using one of its containing elements.
+     *
+     * If the element found by locator is a form, or an element within a form, then
+     * this will be submitted to the remote server.
+     *
+     * @param string|RemoteWebElement $locator Element locator.
+     *
+     * @return $this
+     */
+    public function submit($locator)
+    {
+        return $this->elementAction('submit', $locator, true);
     }
 
     // ----------------------------------------------------------------------------
@@ -713,7 +829,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     public function assertPageIs($url, $message = '', $negate = false)
     {
         $url = $this->normalizeUrl($url);
-        $method = $this->getAssertionMethod('assertEquals', $negate);
+        $method = $negate ? 'assertNotEquals' : 'assertEquals';
 
         $this->$method($url, $this->url(), $message);
 
@@ -763,7 +879,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     public function assertPageContains($text, $message = '', $negate = false)
     {
         $text = preg_quote($text, '/');
-        $method = $this->getAssertionMethod('assertRegExp', $negate);
+        $method = $negate ? 'assertNotRegExp' : 'assertRegExp';
 
         $this->$method("/{$text}/i", $this->getPageSource(), $message);
 
@@ -812,7 +928,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function assertTitleIs($title, $message = '', $negate = false)
     {
-        $method = $this->getAssertionMethod('assertEquals', $negate);
+        $method = $negate ? 'assertNotEquals' : 'assertEquals';
 
         $this->$method($title, $this->getPageTitle(), $message);
 
@@ -861,7 +977,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function assertTitleContains($title, $message = '', $negate = false)
     {
-        $method = $this->getAssertionMethod('assertContains', $negate);
+        $method = $negate ? 'assertNotContains' : 'assertContains';
 
         $this->$method($title, $this->getPageTitle(), $message);
 
@@ -961,49 +1077,28 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Checks whether it's a valid RemoteWebElement or not.
+     * Checks whether it's a single RemoteWebElement or an array of them.
      *
-     * @param mixed $godKnowsWhatTheFuck Thing to check.
+     * @param mixed $wtf Thing to check.
      *
      * @return bool
      */
-    private function isElement($godKnowsWhatTheFuck)
+    private function isElement($wtf)
     {
-        return $godKnowsWhatTheFuck instanceof RemoteWebElement;
+        is_array($wtf) and $wtf = end($wtf);
+
+        return $wtf instanceof RemoteWebElement;
     }
 
     /**
-     * Returns proper PHPUnit assertion method name depending on $negate.
+     * Checks whether it's a element locator or nor.
      *
-     * @param string $method
-     * @param bool $negate
+     * @param mixed $wtf Thing to check.
      *
-     * @return string
+     * @return bool
      */
-    private function getAssertionMethod($method, $negate)
+    private function isLocator($wtf)
     {
-        $negates = [
-            'assertEquals'   => 'assertNotEquals',
-            'assertRegExp'   => 'assertNotRegExp',
-            'assertContains' => 'assertNotContains',
-        ];
-
-        return $negate ? $negates[$method] : $method;
-    }
-
-    /**
-     * Returns a comprehensive "Selenium is not running" error message.
-     *
-     * @param string $original Original error message.
-     *
-     * @return string
-     */
-    private function seleniumNotRunningMessage($original = '')
-    {
-        return "Seems like that Selenium is not running. To run Selenium issue this command:\n" .
-               "    java -Dweb.gecko.driver=/path/to/geckodriver" .
-               "-Dwebdriver.chrome.driver=/path/to/chromedriver -jar /path/to/selenium-server-standalone-*.jar\n" .
-               "Make sure to pass -jar argument as the last argument, or you will encounter " .
-               "\"Unknown option\" exception in newer versions of Selenium.\n\n" . $original;
+        return is_string($wtf);
     }
 }
