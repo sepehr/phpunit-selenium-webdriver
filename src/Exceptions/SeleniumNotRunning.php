@@ -2,7 +2,8 @@
 
 namespace Sepehr\PHPUnitSelenium\Exceptions;
 
-class SeleniumNotRunning extends Exception {
+class SeleniumNotRunning extends Exception
+{
 
     /**
      * Constructor.

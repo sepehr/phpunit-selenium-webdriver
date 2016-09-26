@@ -430,7 +430,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
                     if (empty($elements)) {
                         $elements = $this->findByText($locator);
 
-                        if (empty( $elements )) {
+                        if (empty($elements)) {
                             $elements = $this->findByXpath($locator);
                         }
                     }
@@ -720,7 +720,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         if ($key[0] !== '\\') {
             $const = WebDriverKeys::class . '::' . strtoupper($key);
 
-            if ( ! defined($const)) {
+            if (! defined($const)) {
                 throw new InvalidArgument("Invalid key: $key");
             }
 
