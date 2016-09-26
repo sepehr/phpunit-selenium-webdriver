@@ -119,7 +119,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     public function findsElementByCssSelector()
     {
         $element = $this->visitTestFile()
-                        ->findBySelector($selector = '#main > section p.lead');
+                        ->findBySelector('#main > section p.lead');
 
         $this->assertSame(
             'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
