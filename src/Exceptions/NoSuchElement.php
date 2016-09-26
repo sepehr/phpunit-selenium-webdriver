@@ -2,4 +2,6 @@
 
 namespace Sepehr\PHPUnitSelenium\Exceptions;
 
-class NoSuchElement extends Exception {}
+class NoSuchElement extends Exception
+{
+}
