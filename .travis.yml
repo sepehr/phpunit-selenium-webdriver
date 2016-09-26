@@ -12,9 +12,6 @@ php:
 
 addons:
   firefox: latest
-  apt:
-    packages:
-      - oracle-java8-installer
 
 matrix:
   - fast_finish: true
@@ -37,7 +34,11 @@ before_script:
   - sleep 3
 
   # Run Selenium standalone server, silently...
-  - java -Dwebdriver.gecko.driver=/tmp/geckodriver -jar /tmp/selenium.jar > /dev/null 2>&1 &
+  - >
+    sudo java
+    -Dwebdriver.gecko.driver=/tmp/geckodriver
+    -Dwebdriver.firefox.bin=`which firefox`
+    -jar /tmp/selenium.jar &> /dev/null &
   - sleep 3
 
 script: vendor/bin/phpunit
