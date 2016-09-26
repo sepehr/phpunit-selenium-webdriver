@@ -1,0 +1,48 @@
+language: php
+
+php:
+  - 5.6
+  - 7.0
+  - 7.1
+  - hhvm
+
+addons:
+  - firefox: latest
+
+matrix:
+  - fast_finish: true
+  - allow_failures:
+      - php: hhvm
+
+before_install:
+  - travis_retry composer self-update
+  - composer --version
+
+install:
+  - travis_retry composer install --prefer-dist --no-interaction --no-suggest
+  - >
+    echo;
+    echo "Installing Selenium standalone server 3.0.0-beta3 with geckodriver v0.10.0 ..."
+    travis_retry wget --quiet http://goo.gl/EUxR76 -O /tmp/selenium.jar
+    travis_retry wget --quiet https://goo.gl/k3M4M1 -O /tmp/geckodriver.tar.gz
+    tar -xjf /tmp/geckodriver.tar.gz --directory /tmp
+
+before_script:
+  - >
+    echo;
+    echo "Starting X virtual framebuffer..."
+    export DISPLAY=:99.0
+    sh -e /etc/init.d/xvfb start
+    sleep 3
+  - >
+    echo;
+    echo "Running Selenium standalone server, silently..."
+    java -Dweb.gecko.driver=geckodriver -jar /tmp/selenium.jar > /dev/null 2>&1 &
+    sleep 3
+  - >
+    echo;
+    echo "Using firefox version `firefox --version`..."
+    echo "Running tests now..."
+    echo;
+
+script: vendor/bin/phpunit
