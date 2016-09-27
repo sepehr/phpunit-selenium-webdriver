@@ -13,6 +13,10 @@ php:
 addons:
   firefox: latest
 
+branches:
+  only:
+    - master
+
 matrix:
   - fast_finish: true
   - allow_failures:
@@ -41,4 +45,8 @@ before_script:
     -jar /tmp/selenium.jar &> /dev/null &
   - sleep 3
 
-script: vendor/bin/phpunit
+script:
+  - vendor/bin/phpunit --coverage-clover tests/coverage/clover.xml
+
+after_script:
+  - vendor/bin/codacycoverage clover tests/coverage/clover.xml
