@@ -27,18 +27,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected $driver;
 
     /**
-     * Browser name.
-     *
-     * @var string
-     */
-    protected $browser = 'firefox';
-
-    /**
      * Current URL.
      *
      * @var string
      */
     protected $currentUrl;
+
+    /**
+     * Browser name.
+     *
+     * @var string
+     */
+    protected $browser = 'firefox';
 
     /**
      * Base URL for all requests.
