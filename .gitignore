@@ -2,6 +2,7 @@ composer.phar
 composer.lock
 .php_cs.cache
 vendor
+docs/build
 tests/coverage
 
 *.lock
