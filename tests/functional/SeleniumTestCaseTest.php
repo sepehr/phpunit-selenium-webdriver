@@ -2,6 +2,7 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
 
 class SeleniumTestCaseTest extends BaseSeleniumTestCase
@@ -18,7 +19,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
 
         $this->visit($url);
 
-        $this->assertSame($url, $this->driverUrl());
+        $this->assertSame($url, $this->webDriverUrl());
     }
 
     /** @test */
@@ -28,7 +29,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
 
         $this->visit($url);
 
-        $this->assertSame($url, $this->driverUrl());
+        $this->assertSame($url, $this->webDriverUrl());
     }
 
     /** @test */
@@ -48,7 +49,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     /** @test */
     public function seesPageSource()
     {
-        $this->assertNotEmpty($this->visitTestFile()->getPageSource());
+        $this->assertNotEmpty($this->visitTestFile()->pageSource());
     }
 
     /** @test */
@@ -68,7 +69,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     {
         $this->assertSame(
             $this->testFileTitle,
-            $this->visitTestFile()->getPageTitle()
+            $this->visitTestFile()->pageTitle()
         );
     }
 
@@ -288,7 +289,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     /** @test */
     public function findByReturnsAnEmptyArrayForBadLocator()
     {
-        $by = $this->getWebDriverByInstance('name', 'badLocator,VeryBadLocator!');
+        $by = $this->createWebDriverByInstance('name', 'badLocator,VeryBadLocator!');
 
         $this->assertEmpty(
             $this->visitTestFile()->findBy($by)
@@ -298,28 +299,28 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
     /** @test */
     public function findByReturnsAnElementIfOnlyOneElementIsFound()
     {
-        $by = $this->getWebDriverByInstance('id', 'main');
+        $by = $this->createWebDriverByInstance('id', 'main');
         $el = $this->visitTestFile()->findBy($by);
 
-        $this->assertInstanceOf($this->getValidElementClassName(), $el);
+        $this->assertInstanceOf(RemoteWebElement::class, $el);
     }
 
     /** @test */
     public function findByReturnsAnArrayOfElementsIfMultipleElementsAreFound()
     {
-        $by  = $this->getWebDriverByInstance('cssSelector', '.findMeByClass');
+        $by  = $this->createWebDriverByInstance('cssSelector', '.findMeByClass');
         $els = $this->visitTestFile()->findBy($by);
 
-        $this->assertContainsOnlyInstancesOf($this->getValidElementClassName(), $els);
+        $this->assertContainsOnlyInstancesOf(RemoteWebElement::class, $els);
     }
 
     /** @test */
     public function findOneByReturnsOnlyOneElementEvenThoughThereAreMultipleMatchedOnes()
     {
-        $by = $this->getWebDriverByInstance('cssSelector', '.findMeByClass');
+        $by = $this->createWebDriverByInstance('cssSelector', '.findMeByClass');
         $el = $this->visitTestFile()->findOneBy($by);
 
-        $this->assertInstanceOf($this->getValidElementClassName(), $el);
+        $this->assertInstanceOf(RemoteWebElement::class, $el);
     }
 
     /** @test */
@@ -328,7 +329,7 @@ class SeleniumTestCaseTest extends BaseSeleniumTestCase
         $this->expectException(NoSuchElement::class);
 
         $this->visitTestFile()->findOneBy(
-            $this->getWebDriverByInstance('cssSelector', 'lead')
+            $this->createWebDriverByInstance('cssSelector', 'lead')
         );
     }
 
