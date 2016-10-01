@@ -4,15 +4,15 @@ namespace Sepehr\PHPUnitSelenium;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
-use Facebook\WebDriver\WebDriverPlatform;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
-use Facebook\WebDriver\Remote\WebDriverCapabilityType;
+use Facebook\WebDriver\Remote\WebDriverBrowserType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
+use Sepehr\PHPUnitSelenium\Exceptions\NoSuchBrowser;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
 
@@ -24,7 +24,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @var RemoteWebDriver
      */
-    protected $driver;
+    protected $webDriver;
+
+    /**
+     * Instance of DesiredCapabilities.
+     *
+     * @var DesiredCapabilities
+     */
+    protected $desiredCapabilities;
 
     /**
      * Current URL.
@@ -73,14 +80,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @var string|null
      */
-    protected $httpProxy = null;
+    protected $httpProxy;
 
     /**
      * Webdriver proxy port.
      *
      * @var int|null
      */
-    protected $httpProxyPort = null;
+    protected $httpProxyPort;
 
     /**
      * Destroys webdriver session after the test.
@@ -88,14 +95,10 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @return $this
      * @after
      */
-    protected function tearDownDriver()
+    protected function tearDownWebDriver()
     {
         return $this->destroySession();
     }
-
-    // ----------------------------------------------------------------------------
-    // Protected API
-    // ----------------------------------------------------------------------------
 
     /**
      * Initiates webdriver session.
@@ -107,15 +110,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function createSession($force = false)
     {
-        if ($force or ! $this->driverLoaded()) {
+        if ($force || ! $this->webDriverLoaded()) {
             try {
-                $this->driver = RemoteWebDriver::create(
-                    $this->host,
-                    $this->desiredCapabilities(),
-                    $this->connectionTimeout,
-                    $this->requestTimeout,
-                    $this->httpProxy,
-                    $this->httpProxyPort
+                $this->setDesiredCapabilities(
+                    $this->createDesiredCapabilitiesInstance()
+                );
+
+                $this->setWebDriver(
+                    $this->createWebDriverInstance()
                 );
             } catch (WebDriverCurlException $e) {
                 throw new SeleniumNotRunning($e->getMessage());
@@ -126,15 +128,201 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Forces to create a new session even though one already exists.
+     *
+     * @return $this
+     */
+    protected function forceCreateSession()
+    {
+        return $this->createSession(true);
+    }
+
+    /**
      * Destroys webdriver session, if available.
      *
      * @return $this
      */
     protected function destroySession()
     {
-        if ($this->driver instanceof RemoteWebDriver) {
-            $this->driver->quit();
+        if ($this->webDriver instanceof RemoteWebDriver) {
+            $this->webDriver->quit();
+
+            $this->webDriver = null;
         }
+
+        return $this;
+    }
+
+    /**
+     * Sets the internal webdriver instance.
+     *
+     * @param RemoteWebDriver $webDriver
+     *
+     * @return $this
+     */
+    protected function setWebDriver(RemoteWebDriver $webDriver)
+    {
+        $this->webDriver = $webDriver;
+
+        return $this;
+    }
+
+    /**
+     * Returns webdriver instance.
+     *
+     * @return RemoteWebDriver
+     */
+    protected function webDriver()
+    {
+        return $this->webDriver;
+    }
+
+    /**
+     * Check if webdriver is loaded.
+     *
+     * @return bool
+     */
+    protected function webDriverLoaded()
+    {
+        return $this->webDriver instanceof RemoteWebDriver;
+    }
+
+    /**
+     * RemoteWebDriver factory.
+     *
+     * @return RemoteWebDriver
+     */
+    protected function createWebDriverInstance()
+    {
+        return RemoteWebDriver::create(
+            $this->host,
+            $this->desiredCapabilities,
+            $this->connectionTimeout,
+            $this->requestTimeout,
+            $this->httpProxy,
+            $this->httpProxyPort
+        );
+    }
+
+    /**
+     * WebDriverBy factory.
+     *
+     * @param string $mechanism Valid mechanism.
+     * @param string $value
+     *
+     * @return WebDriverBy
+     * @throws InvalidArgument
+     */
+    protected function createWebDriverByInstance($mechanism, $value = '')
+    {
+        try {
+            return WebDriverBy::$mechanism($value);
+        } catch (\Exception $e) {
+            throw new InvalidArgument("Invalid WebDriverBy mechanism: $mechanism");
+        }
+    }
+
+    /**
+     * Sets the internal DesiredCapabilities instance.
+     *
+     * @param DesiredCapabilities $caps
+     *
+     * @return $this
+     */
+    protected function setDesiredCapabilities(DesiredCapabilities $caps)
+    {
+        $this->desiredCapabilities = $caps;
+
+        return $this;
+    }
+
+    /**
+     * Getter for desiredCapabilities property.
+     *
+     * @return DesiredCapabilities
+     */
+    protected function desiredCapabilities()
+    {
+        return $this->desiredCapabilities;
+    }
+
+    /**
+     * DesiredCapabilities factory.
+     *
+     * @param null|string $browser
+     *
+     * @return DesiredCapabilities
+     */
+    protected function createDesiredCapabilitiesInstance($browser = null)
+    {
+        $browser or $browser = $this->browser;
+
+        $this->validateBrowser($browser);
+
+        return DesiredCapabilities::$browser();
+    }
+
+    /**
+     * Set browser name.
+     *
+     * Can be any browser name known to WebDriverBrowserType class.
+     *
+     * @param string $browser Browser name.
+     *
+     * @return $this
+     */
+    protected function setBrowser($browser)
+    {
+        $this->validateBrowser($browser);
+
+        $this->browser = $browser;
+
+        return $this;
+    }
+
+    /**
+     * Validates a browser name.
+     *
+     * @param string $browser Browser name.
+     *
+     * @return bool
+     * @throws NoSuchBrowser
+     */
+    protected function validateBrowser($browser)
+    {
+        $browser = strtoupper($browser);
+
+        if (defined(WebDriverBrowserType::class . "::$browser")) {
+            return true;
+        }
+
+        throw new NoSuchBrowser("Invalid browser name: $browser");
+    }
+
+    /**
+     * Set base URL for all requests.
+     *
+     * @param string $url Base URL to be set.
+     *
+     * @return $this
+     */
+    protected function setBaseUrl($url)
+    {
+        $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    /**
+     * Set current URL.
+     *
+     * @param string $url URL to be set as current URL.
+     *
+     * @return $this
+     */
+    protected function setUrl($url)
+    {
+        $this->currentUrl = $this->normalizeUrl($url);
 
         return $this;
     }
@@ -154,27 +342,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    protected function driverUrl()
+    protected function webDriverUrl()
     {
-        return $this->driver->getCurrentURL();
+        return $this->webDriver->getCurrentURL();
     }
 
     /**
-     * Set current URL.
-     *
-     * @param string $url URL to be set as current URL.
-     *
-     * @return $this
-     */
-    protected function setUrl($url)
-    {
-        $this->currentUrl = $this->normalizeUrl($url);
-
-        return $this;
-    }
-
-    /**
-     * Update current URL.
+     * Updates URL based on driver's current URL.
      *
      * @return $this
      */
@@ -186,36 +360,34 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         // for the URL to be updated. Any better ideas?!
         $this->wait();
 
-        $this->setUrl($this->driverUrl());
+        $this->setUrl($this->webDriverUrl());
+        $this->setUrl($this->webDriverUrl());
 
         return $this;
     }
 
-    /**
-     * Returns a proper DesiredCapability instance for webdriver session.
-     *
-     * @return DesiredCapabilities
-     */
-    protected function desiredCapabilities()
-    {
-        if (method_exists(DesiredCapabilities::class, $this->browser)) {
-            return DesiredCapabilities::{$this->browser}();
-        }
-
-        return new DesiredCapabilities([
-            WebDriverCapabilityType::BROWSER_NAME => $this->browser,
-            WebDriverCapabilityType::PLATFORM => WebDriverPlatform::ANY
-        ]);
-    }
+    // ----------------------------------------------------------------------------
+    // Page Interaction
+    // ----------------------------------------------------------------------------
 
     /**
-     * Returns webdriver instance.
+     * Visit a URL.
      *
-     * @return RemoteWebDriver
+     * @param string $url URL to visit.
+     *
+     * @return $this
      */
-    protected function webDriver()
+    protected function visit($url = '/')
     {
-        return $this->driver;
+        $this->createSession();
+
+        $this->setUrl($url);
+
+        $this->webDriver->get($this->url());
+
+        $this->updateUrl();
+
+        return $this;
     }
 
     /**
@@ -223,9 +395,9 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    protected function getPageTitle()
+    protected function pageTitle()
     {
-        return $this->driver->getTitle();
+        return $this->webDriver->getTitle();
     }
 
     /**
@@ -233,38 +405,9 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    protected function getPageSource()
+    protected function pageSource()
     {
-        return $this->driver->getPageSource();
-    }
-
-    /**
-     * Returns a WebDriverBy instance.
-     *
-     * @param string $mechanism Valid mechanism.
-     * @param string $value
-     *
-     * @return WebDriverBy
-     * @throws InvalidArgument
-     * @see WebDriverBy
-     */
-    protected function getWebDriverByInstance($mechanism, $value = '')
-    {
-        if (! method_exists(WebDriverBy::class, $mechanism)) {
-            throw new InvalidArgument("Invalid WebDriverBy mechanism: $mechanism");
-        }
-
-        return WebDriverBy::$mechanism($value);
-    }
-
-    /**
-     * Returns the full class name for a valid element.
-     *
-     * @return string
-     */
-    protected function getValidElementClassName()
-    {
-        return RemoteWebElement::class;
+        return $this->webDriver->getPageSource();
     }
 
     /**
@@ -276,74 +419,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function savePageSource($filename)
     {
-        file_put_contents($filename, $this->getPageSource());
-
-        return $this;
-    }
-
-    /**
-     * Execute a command on a set of elements.
-     *
-     * Proxies actions to RemoteWebElement with some initial housekeepings, if needed.
-     *
-     * @param string|array $action Action(s) to be executed on element.
-     * @param string|RemoteWebElement|RemoteWebElement[] $target An element, array of elements or a locator.
-     * @param bool $changesUrl Whether the action might change the URL or not.
-     *
-     * @return $this
-     * @throws InvalidArgument
-     */
-    protected function elementAction($action, $target, $changesUrl = false)
-    {
-        $elements = $this->isLocator($target)
-            ? $this->find($target)
-            : $target;
-
-        if (! $this->isElement($elements)) {
-            throw new InvalidArgument('No element is targeted to execute the action(s) on.');
-        }
-
-        is_array($action) or $action = [$action => []];
-        is_array($elements) or $elements = [$elements];
-
-        // Execute all actions for each element
-        foreach ($elements as $element) {
-            foreach ($action as $method => $args) {
-                if (! method_exists($element, $method)) {
-                    throw new InvalidArgument("Invalid element action: $method");
-                }
-
-                is_array($args) or $args = [$args];
-
-                call_user_func_array([$element, $method], $args);
-            }
-        }
-
-        $changesUrl and $this->updateUrl();
-
-        return $this;
-    }
-
-    // ----------------------------------------------------------------------------
-    // Public API
-    // ----------------------------------------------------------------------------
-
-    /**
-     * Visit a URL.
-     *
-     * @param string $url URL to visit.
-     *
-     * @return $this
-     */
-    public function visit($url = '/')
-    {
-        $this->createSession();
-
-        $this->setUrl($url);
-
-        $this->driver->get($this->url());
-
-        $this->updateUrl();
+        file_put_contents($filename, $this->pageSource());
 
         return $this;
     }
@@ -355,43 +431,16 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function wait($seconds = 3)
+    protected function wait($seconds = 3)
     {
         sleep($seconds);
 
         return $this;
     }
 
-    /**
-     * Set browser name.
-     *
-     * Can be "firefox", "chrome", "phantomjs" or any other driver
-     * available to Selenium executable.
-     *
-     * @param string $browser Browser name.
-     *
-     * @return $this
-     */
-    public function browser($browser)
-    {
-        $this->browser = $browser;
-
-        return $this;
-    }
-
-    /**
-     * Set base URL for all requests.
-     *
-     * @param string $url Base URL to be set.
-     *
-     * @return $this
-     */
-    public function baseUrl($url)
-    {
-        $this->baseUrl = $url;
-
-        return $this;
-    }
+    // ----------------------------------------------------------------------------
+    // Element Query
+    // ----------------------------------------------------------------------------
 
     /**
      * Tries to find elements by examining CSS selector, name, value or text.
@@ -414,7 +463,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @see findBySelector(), findByName(), findById(), findByValue(), findByText(), findByXpath()
      * @todo Guess the type of locator based on its format
      */
-    public function find($locator)
+    protected function find($locator)
     {
         $elements = $this->findBySelector($locator);
 
@@ -448,9 +497,9 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findBy(WebDriverBy $by)
+    protected function findBy(WebDriverBy $by)
     {
-        $elements = $this->driver->findElements($by);
+        $elements = $this->webDriver->findElements($by);
 
         return empty($elements)
             ? $elements
@@ -466,10 +515,10 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @return RemoteWebElement
      * @throws NoSuchElement
      */
-    public function findOneBy(WebDriverBy $by)
+    protected function findOneBy(WebDriverBy $by)
     {
         try {
-            return $this->driver->findElement($by);
+            return $this->webDriver->findElement($by);
         } catch (NoSuchElementException $e) {
             throw new NoSuchElement($e);
         }
@@ -482,7 +531,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByName($name)
+    protected function findByName($name)
     {
         return $this->findBy(WebDriverBy::name($name));
     }
@@ -494,7 +543,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findBySelector($selector)
+    protected function findBySelector($selector)
     {
         return $this->findBy(WebDriverBy::cssSelector($selector));
     }
@@ -506,7 +555,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByClass($class)
+    protected function findByClass($class)
     {
         return $this->findBySelector(".$class");
     }
@@ -518,7 +567,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findById($id)
+    protected function findById($id)
     {
         return $this->findBy(WebDriverBy::id($id));
     }
@@ -532,7 +581,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByValue($value, $element = '*', $strict = true)
+    protected function findByValue($value, $element = '*', $strict = true)
     {
         $op = $strict ? '=' : '*=';
 
@@ -547,7 +596,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByPartialValue($value, $element = '*')
+    protected function findByPartialValue($value, $element = '*')
     {
         return $this->findByValue($value, $element, false);
     }
@@ -561,7 +610,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByText($text, $element = '*', $strict = true)
+    protected function findByText($text, $element = '*', $strict = true)
     {
         $op = $strict ? "text()='$text'" : "contains(text(), '$text')";
 
@@ -575,7 +624,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|\Facebook\WebDriver\Remote\RemoteWebElement[]
      */
-    public function findByBody(...$args)
+    protected function findByBody(...$args)
     {
         return $this->findByText(...$args);
     }
@@ -588,7 +637,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByPartialText($text, $element = '*')
+    protected function findByPartialText($text, $element = '*')
     {
         return $this->findByText($text, $element, false);
     }
@@ -602,7 +651,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByTextOrValue($criteria, $element = '*', $strict = true)
+    protected function findByTextOrValue($criteria, $element = '*', $strict = true)
     {
         $elements = $this->findByText($criteria, $element, $strict);
 
@@ -619,7 +668,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByPartialTextOrValue($criteria, $element = '*')
+    protected function findByPartialTextOrValue($criteria, $element = '*')
     {
         return $this->findByTextOrValue($criteria, $element, false);
     }
@@ -631,7 +680,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByNameOrId($criteria)
+    protected function findByNameOrId($criteria)
     {
         $criteria[0] === '#' and $criteria = substr($criteria, 1);
 
@@ -651,7 +700,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByLinkText($text)
+    protected function findByLinkText($text)
     {
         return $this->findBy(WebDriverBy::linkText($text));
     }
@@ -663,7 +712,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByLinkPartialText($partialText)
+    protected function findByLinkPartialText($partialText)
     {
         return $this->findBy(WebDriverBy::partialLinkText($partialText));
     }
@@ -675,7 +724,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByXpath($xpath)
+    protected function findByXpath($xpath)
     {
         return $this->findBy(WebDriverBy::xpath($xpath));
     }
@@ -687,10 +736,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return RemoteWebElement|RemoteWebElement[]
      */
-    public function findByTag($tag)
+    protected function findByTag($tag)
     {
         return $this->findBy(WebDriverBy::tagName($tag));
     }
+
+    // ----------------------------------------------------------------------------
+    // Element Interaction
+    // ----------------------------------------------------------------------------
 
     /**
      * Types into an element.
@@ -700,7 +753,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function type($text, $locator)
+    protected function type($text, $locator)
     {
         return $this->elementAction(['sendKeys' => $text], $locator, true);
     }
@@ -715,7 +768,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @throws InvalidArgument
      * @see WebDriverKeys
      */
-    public function hit($key, $locator)
+    protected function hit($key, $locator)
     {
         if ($key[0] !== '\\') {
             $const = WebDriverKeys::class . '::' . strtoupper($key);
@@ -737,7 +790,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function press(...$args)
+    protected function press(...$args)
     {
         return $this->hit(...$args);
     }
@@ -749,7 +802,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function enter($locator)
+    protected function enter($locator)
     {
         return $this->hit('enter', $locator);
     }
@@ -761,7 +814,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function click($locator)
+    protected function click($locator)
     {
         return $this->elementAction('click', $locator, true);
     }
@@ -773,7 +826,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function follow(...$args)
+    protected function follow(...$args)
     {
         return $this->click(...$args);
     }
@@ -785,10 +838,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function clear($locator)
+    protected function clear($locator)
     {
         return $this->elementAction('clear', $locator);
     }
+
+    // ----------------------------------------------------------------------------
+    // Form Interaction
+    // ----------------------------------------------------------------------------
 
     /**
      * Fills a field.
@@ -798,7 +855,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function fillField($locator, $value)
+    protected function fillField($locator, $value)
     {
         return $this->type($value, $locator);
     }
@@ -811,7 +868,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function fillForm($locator, $formData = [])
+    protected function fillForm($locator, $formData = [])
     {
         // @TODO: Implement...
     }
@@ -824,7 +881,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function submitForm($locator, $formData = [])
+    protected function submitForm($locator, $formData = [])
     {
         // @TODO: Implement...
     }
@@ -839,7 +896,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function submit($locator)
+    protected function submit($locator)
     {
         return $this->elementAction('submit', $locator, true);
     }
@@ -857,7 +914,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function assertPageIs($url, $message = '', $negate = false)
+    protected function assertPageIs($url, $message = '', $negate = false)
     {
         $url = $this->normalizeUrl($url);
         $method = $negate ? 'assertNotEquals' : 'assertEquals';
@@ -874,7 +931,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function seePageIs($url)
+    protected function seePageIs($url)
     {
         return $this->assertPageIs(
             $url,
@@ -889,7 +946,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function dontSeePageIs($url)
+    protected function dontSeePageIs($url)
     {
         return $this->assertPageIs(
             $url,
@@ -907,12 +964,12 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function assertPageContains($text, $message = '', $negate = false)
+    protected function assertPageContains($text, $message = '', $negate = false)
     {
         $text = preg_quote($text, '/');
         $method = $negate ? 'assertNotRegExp' : 'assertRegExp';
 
-        $this->$method("/{$text}/i", $this->getPageSource(), $message);
+        $this->$method("/{$text}/i", $this->pageSource(), $message);
 
         return $this;
     }
@@ -924,7 +981,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function see($text)
+    protected function see($text)
     {
         return $this->assertPageContains(
             $text,
@@ -939,7 +996,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function dontSee($text)
+    protected function dontSee($text)
     {
         return $this->assertPageContains(
             $text,
@@ -957,11 +1014,11 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function assertTitleIs($title, $message = '', $negate = false)
+    protected function assertTitleIs($title, $message = '', $negate = false)
     {
         $method = $negate ? 'assertNotEquals' : 'assertEquals';
 
-        $this->$method($title, $this->getPageTitle(), $message);
+        $this->$method($title, $this->pageTitle(), $message);
 
         return $this;
     }
@@ -973,7 +1030,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function seeTitle($title)
+    protected function seeTitle($title)
     {
         return $this->assertTitleIs(
             $title,
@@ -988,7 +1045,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function dontSeeTitle($title)
+    protected function dontSeeTitle($title)
     {
         return $this->assertTitleIs(
             $title,
@@ -1006,11 +1063,11 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function assertTitleContains($title, $message = '', $negate = false)
+    protected function assertTitleContains($title, $message = '', $negate = false)
     {
         $method = $negate ? 'assertNotContains' : 'assertContains';
 
-        $this->$method($title, $this->getPageTitle(), $message);
+        $this->$method($title, $this->pageTitle(), $message);
 
         return $this;
     }
@@ -1022,7 +1079,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function seeTitleContains($title)
+    protected function seeTitleContains($title)
     {
         return $this->assertTitleContains(
             $title,
@@ -1037,7 +1094,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return $this
      */
-    public function dontSeeTitleContains($title)
+    protected function dontSeeTitleContains($title)
     {
         return $this->assertTitleContains(
             $title,
@@ -1053,17 +1110,17 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $message
      * @param bool $negate
      */
-    public function assertElementExists($element, $message = '', $negate = false)
+    protected function assertElementExists($element, $message = '', $negate = false)
     {
         //
     }
 
-    public function seeElement($element)
+    protected function seeElement($element)
     {
         //
     }
 
-    public function dontSeeElement($element)
+    protected function dontSeeElement($element)
     {
         //
     }
@@ -1071,6 +1128,49 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     // ----------------------------------------------------------------------------
     // Private Helpers
     // ----------------------------------------------------------------------------
+
+    /**
+     * Execute a command on a set of elements.
+     *
+     * Proxies actions to RemoteWebElement with some initial housekeepings, if needed.
+     *
+     * @param string|array $action Action(s) to be executed on element.
+     * @param string|RemoteWebElement|RemoteWebElement[] $target An element, array of elements or a locator.
+     * @param bool $changesUrl Whether the action might change the URL or not.
+     *
+     * @return $this
+     * @throws InvalidArgument
+     */
+    private function elementAction($action, $target, $changesUrl = false)
+    {
+        $elements = $this->isLocator($target)
+            ? $this->find($target)
+            : $target;
+
+        if (! $this->isElement($elements)) {
+            throw new InvalidArgument('No element is targeted to execute the action(s) on.');
+        }
+
+        is_array($action) or $action = [$action => []];
+        is_array($elements) or $elements = [$elements];
+
+        // Execute all actions for each element
+        foreach ($elements as $element) {
+            foreach ($action as $method => $args) {
+                if (! method_exists($element, $method)) {
+                    throw new InvalidArgument("Invalid element action: $method");
+                }
+
+                is_array($args) or $args = [$args];
+
+                call_user_func_array([$element, $method], $args);
+            }
+        }
+
+        $changesUrl and $this->updateUrl();
+
+        return $this;
+    }
 
     /**
      * Preps relative URL.
@@ -1098,16 +1198,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Check if webdriver is loaded.
-     *
-     * @return bool
-     */
-    private function driverLoaded()
-    {
-        return $this->driver instanceof RemoteWebDriver;
-    }
-
-    /**
      * Checks whether it's a single RemoteWebElement or an array of them.
      *
      * @param mixed $wtf Thing to check.
@@ -1122,7 +1212,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Checks whether it's a element locator or nor.
+     * Checks whether it's a element locator or not.
      *
      * @param mixed $wtf Thing to check.
      *
