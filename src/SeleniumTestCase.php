@@ -18,6 +18,26 @@ use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
 
+/**
+ * SeleniumTestCase Class
+ *
+ * NOTE:
+ * Even though SeleniumTestCase allows setter injections for each
+ * of its dependencies regarding better testability (e.g. setWebDriver(),
+ * setFilesystem()), it needs to utilize devious hard dependencies to avoid
+ * usage complexity and provide ease-of-use for the enduser with a minimum
+ * possible setup.
+ *
+ * Imagine; you need to write a quick Selenium test and, oh, first you need
+ * to inject a bunch of dependencies to the testcase in order to make it work.
+ * That sucks, right?
+ *
+ * To achieve minimum setup requirements, SeleniumTestCase uses hard dependencies
+ * by default which are all overridable by setters. Hard dependencies are known to
+ * produce hard-to-test code, but on the other hand they bring ease of use for you,
+ * the reader! So, I take the deep dive and test the hard-to-test code. You go enjoy
+ * the ease of use!
+ */
 abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 {
 
