@@ -11,6 +11,7 @@ use Facebook\WebDriver\Remote\WebDriverBrowserType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
+use Sepehr\PHPUnitSelenium\Utils\Filesystem;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchBrowser;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
@@ -32,6 +33,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @var DesiredCapabilities
      */
     protected $desiredCapabilities;
+
+    /**
+     * Holds an instance of filesystem.
+     *
+     * @var Filesystem
+     */
+    protected $filesystem;
 
     /**
      * Current URL.
@@ -88,6 +96,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @var int|null
      */
     protected $httpProxyPort;
+
+    /**
+     * Test setup.
+     *
+     * @return void
+     */
+    protected function setUp()
+    {
+        $this->setFilesystem($this->createFilesystemInstance());
+
+        parent::setUp();
+    }
 
     /**
      * Destroys webdriver session after the test.
@@ -263,6 +283,30 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Sets internal Filesystem instance.
+     *
+     * @param Filesystem $fs
+     *
+     * @return $this
+     */
+    protected function setFilesystem(Filesystem $fs)
+    {
+        $this->filesystem = $fs;
+
+        return $this;
+    }
+
+    /**
+     * Creates an instance of filesystem.
+     *
+     * @return Filesystem
+     */
+    protected function createFilesystemInstance()
+    {
+        return new Filesystem;
+    }
+
+    /**
      * Set browser name.
      *
      * Can be any browser name known to WebDriverBrowserType class.
@@ -413,13 +457,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Saves current page's source into file.
      *
-     * @param string $filename
+     * @param string $filepath
      *
      * @return $this
+     * @throws InvalidArgument
      */
-    protected function savePageSource($filename)
+    protected function savePageSource($filepath)
     {
-        file_put_contents($filename, $this->pageSource());
+        try {
+            $this->filesystem->put($filepath, $this->pageSource());
+        } catch (\Exception $e) {
+            throw new InvalidArgument("Could not write the page source to file: $filepath");
+        }
 
         return $this;
     }
