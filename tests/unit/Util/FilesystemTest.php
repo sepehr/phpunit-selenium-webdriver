@@ -38,13 +38,14 @@ class FilesystemTest extends \PHPUnit_Framework_TestCase
     public function putsDataIntoFile()
     {
         $content  = 'baz';
+        $osPerms  = $this->getFilePerms(__FILE__);
         $filepath = $this->shithole . DIRECTORY_SEPARATOR . 'foo' . DIRECTORY_SEPARATOR . 'bar.txt';
 
         $this->filesystem->put($filepath, $content);
 
         $this->assertFileExists($filepath);
         $this->assertSame($content, file_get_contents($filepath));
-        $this->assertFilePermissions(644, $filepath);
+        $this->assertFilePermissions($osPerms, $filepath);
     }
 
     /**
@@ -57,12 +58,24 @@ class FilesystemTest extends \PHPUnit_Framework_TestCase
      */
     private function assertFilePermissions($expectedPerms, $filepath)
     {
-        $actualPerms = (int) substr(sprintf('%o', fileperms($filepath)), -3);
+        $actualPerms = $this->getFilePerms($filepath);
 
         $this->assertEquals(
             $expectedPerms,
             $actualPerms,
             sprintf('File permissions for %s must be %s but is %s.', $filepath, $expectedPerms, $actualPerms)
         );
+    }
+
+    /**
+     * Returns integer permissions for the given file.
+     *
+     * @param string $filepath
+     *
+     * @return int
+     */
+    private function getFilePerms($filepath)
+    {
+        return (int) substr(sprintf('%o', fileperms($filepath)), -3);
     }
 }
