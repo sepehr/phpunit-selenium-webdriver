@@ -4,8 +4,10 @@ namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
 use Facebook\WebDriver\WebDriverBy;
+use Sepehr\PHPUnitSelenium\Utils\Filesystem;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\WebDriverBrowserType;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
 
 /**
@@ -116,9 +118,18 @@ class DependencyManagementTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function createsADesiredCapabilitiesInstanceForAValidBrowser()
+    public function returnsItsInstanceOfWebDriver()
+    {
+        $this->injectMockedWebDriver();
+
+        $this->assertInstanceOf(RemoteWebDriver::class, $this->webDriver());
+    }
+
+    /** @test */
+    public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughShortcutMethods()
     {
         Mockery::mock('alias:' . DesiredCapabilities::class)
+               // e.g. DesiredCapabilities::firefox()
                ->shouldReceive($browser = 'firefox')
                ->once()
                ->withNoArgs()
@@ -134,11 +145,17 @@ class DependencyManagementTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function returnsItsInstanceOfWebDriver()
+    public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughInstantiating()
     {
-        $this->injectMockedWebDriver();
+        $this->setBrowser($browser = WebDriverBrowserType::KONQUEROR);
 
-        $this->assertInstanceOf(RemoteWebDriver::class, $this->webDriver());
+        // e.g. new DesiredCapabilities([...])
+        Mockery::mock('overload:' . DesiredCapabilities::class);
+
+        $this->assertInstanceOf(
+            DesiredCapabilities::class,
+            $this->createDesiredCapabilitiesInstance()
+        );
     }
 
     /** @test */
@@ -169,5 +186,16 @@ class DependencyManagementTest extends UnitSeleniumTestCase
         $this->expectException(InvalidArgument::class);
 
         $this->createWebDriverByInstance($mechanism, $value);
+    }
+
+    /** @test */
+    public function createsAFilesystemInstance()
+    {
+        Mockery::mock('overload:' . Filesystem::class);
+
+        $this->assertInstanceOf(
+            Filesystem::class,
+            $this->createFilesystemInstance()
+        );
     }
 }
