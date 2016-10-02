@@ -216,7 +216,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         return RemoteWebDriver::create(
             $this->host,
-            $this->desiredCapabilities,
+            $this->desiredCapabilities(),
             $this->connectionTimeout,
             $this->requestTimeout,
             $this->httpProxy,
