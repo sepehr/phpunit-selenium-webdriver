@@ -12,9 +12,9 @@ class SeleniumInteractionTest extends UnitSeleniumTestCase
     public function throwsAnExceptionIfSeleniumIsNotRunning()
     {
         $this->webDriverMock
-            ->shouldReceive('create')
-            ->once()
-            ->andThrow(WebDriverCurlException::class);
+             ->shouldReceive('create')
+             ->once()
+             ->andThrow(WebDriverCurlException::class);
 
         $this->expectException(SeleniumNotRunning::class);
 

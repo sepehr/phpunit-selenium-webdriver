@@ -18,7 +18,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughShortcutMethods()
     {
         Mockery::mock('alias:' . DesiredCapabilities::class)
-            // e.g. DesiredCapabilities::firefox()
+               // e.g. DesiredCapabilities::firefox()
                ->shouldReceive($browser = 'firefox')
                ->once()
                ->withNoArgs()

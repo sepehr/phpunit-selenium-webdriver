@@ -14,10 +14,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                ->shouldReceive('getTitle')
-                ->once()
-                ->andReturn($expected = 'Some sample page title...')
-                ->getMock()
+                 ->shouldReceive('getTitle')
+                 ->once()
+                 ->andReturn($expected = 'Some sample page title...')
+                 ->getMock()
         );
 
         $this->assertSame($expected, $this->pageTitle());
@@ -28,10 +28,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
         );
 
         $this->assertSame($expected, $this->pageSource());
@@ -42,10 +42,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
         );
 
         $this->injectMockedFilesystem(
@@ -65,10 +65,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
         );
 
         $this->injectMockedFilesystem(
