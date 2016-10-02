@@ -24,11 +24,12 @@ class Filesystem
      * Creates a new directory.
      *
      * @param string $dir
+     * @param int $permission
      *
      * @return void
      */
-    public function mkdir($dir)
+    public function mkdir($dir, $permission = 0755)
     {
-        is_dir($dir) or mkdir($dir, 0777, true);
+        is_dir($dir) or mkdir($dir, $permission, true);
     }
 }
