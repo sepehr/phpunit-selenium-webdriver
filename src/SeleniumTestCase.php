@@ -4,16 +4,17 @@ namespace Sepehr\PHPUnitSelenium;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
+use Facebook\WebDriver\WebDriverPlatform;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\WebDriverBrowserType;
+use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
 use Sepehr\PHPUnitSelenium\Utils\Filesystem;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
-use Sepehr\PHPUnitSelenium\Exceptions\NoSuchBrowser;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
 
@@ -53,7 +54,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * @var string
      */
-    protected $browser = 'firefox';
+    protected $browser = WebDriverBrowserType::FIREFOX;
+
+    /**
+     * Platform name.
+     *
+     * @var string
+     */
+    protected $platform = WebDriverPlatform::ANY;
 
     /**
      * Base URL for all requests.
@@ -98,18 +106,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected $httpProxyPort;
 
     /**
-     * Test setup.
-     *
-     * @return void
-     */
-    protected function setUp()
-    {
-        $this->setFilesystem($this->createFilesystemInstance());
-
-        parent::setUp();
-    }
-
-    /**
      * Destroys webdriver session after the test.
      *
      * @return $this
@@ -132,13 +128,8 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         if ($force || ! $this->webDriverLoaded()) {
             try {
-                $this->setDesiredCapabilities(
-                    $this->createDesiredCapabilitiesInstance()
-                );
-
-                $this->setWebDriver(
-                    $this->createWebDriverInstance()
-                );
+                $this->setupDesiredCapabilities();
+                $this->setupWebDriver($force);
             } catch (WebDriverCurlException $e) {
                 throw new SeleniumNotRunning($e->getMessage());
             }
@@ -188,6 +179,24 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Creates and sets an instance of RemoteWebDriver only if necessary.
+     *
+     * @param bool $force
+     *
+     * @return $this
+     */
+    protected function setupWebDriver($force = false)
+    {
+        if ($force || ! $this->webDriver instanceof RemoteWebDriver) {
+            $this->setWebDriver(
+                $this->createWebDriverInstance()
+            );
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns webdriver instance.
      *
      * @return RemoteWebDriver
@@ -227,7 +236,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * WebDriverBy factory.
      *
-     * @param string $mechanism Valid mechanism.
+     * @param string $mechanism
      * @param string $value
      *
      * @return WebDriverBy
@@ -245,13 +254,29 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Sets the internal DesiredCapabilities instance.
      *
-     * @param DesiredCapabilities $caps
+     * @param DesiredCapabilities $capabilities
      *
      * @return $this
      */
-    protected function setDesiredCapabilities(DesiredCapabilities $caps)
+    protected function setDesiredCapabilities(DesiredCapabilities $capabilities)
     {
-        $this->desiredCapabilities = $caps;
+        $this->desiredCapabilities = $capabilities;
+
+        return $this;
+    }
+
+    /**
+     * Creates and sets a DesiredCapabilities instance only if necessary.
+     *
+     * @return $this
+     */
+    protected function setupDesiredCapabilities()
+    {
+        if (! $this->desiredCapabilities instanceof DesiredCapabilities) {
+            $this->setDesiredCapabilities(
+                $this->createDesiredCapabilitiesInstance()
+            );
+        }
 
         return $this;
     }
@@ -269,17 +294,22 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * DesiredCapabilities factory.
      *
-     * @param null|string $browser
-     *
      * @return DesiredCapabilities
      */
-    protected function createDesiredCapabilitiesInstance($browser = null)
+    protected function createDesiredCapabilitiesInstance()
     {
-        $browser or $browser = $this->browser;
+        $this->validateBrowser($this->browser);
 
-        $this->validateBrowser($browser);
+        try {
+            return call_user_func([DesiredCapabilities::class, $this->browser]);
+        } catch (\Exception $e) {
+            $this->validatePlatform($this->platform);
 
-        return DesiredCapabilities::$browser();
+            return new DesiredCapabilities([
+                WebDriverCapabilityType::BROWSER_NAME => $this->browser,
+                WebDriverCapabilityType::PLATFORM     => $this->platform,
+            ]);
+        }
     }
 
     /**
@@ -292,6 +322,22 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected function setFilesystem(Filesystem $fs)
     {
         $this->filesystem = $fs;
+
+        return $this;
+    }
+
+    /**
+     * Creates and sets a Filesystem instance only if necessary.
+     *
+     * @return $this
+     */
+    protected function setupFilesystem()
+    {
+        if (! $this->filesystem instanceof Filesystem) {
+            $this->setFilesystem(
+                $this->createFilesystemInstance()
+            );
+        }
 
         return $this;
     }
@@ -311,7 +357,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      *
      * Can be any browser name known to WebDriverBrowserType class.
      *
-     * @param string $browser Browser name.
+     * @param string $browser
      *
      * @return $this
      */
@@ -327,20 +373,53 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Validates a browser name.
      *
-     * @param string $browser Browser name.
+     * @param string $browser
      *
      * @return bool
-     * @throws NoSuchBrowser
+     * @throws InvalidArgument
      */
     protected function validateBrowser($browser)
     {
-        $browser = strtoupper($browser);
-
-        if (defined(WebDriverBrowserType::class . "::$browser")) {
+        if (in_array($browser, $this->validBrowsers())) {
             return true;
         }
 
-        throw new NoSuchBrowser("Invalid browser name: $browser");
+        throw new InvalidArgument("Invalid browser name: $browser");
+    }
+
+    /**
+     * Set platform name.
+     *
+     * Can be any platform name known to WebDriverPlatform class.
+     *
+     * @param string $platform
+     *
+     * @return $this
+     */
+    protected function setPlatform($platform)
+    {
+        $this->validatePlatform($platform);
+
+        $this->platform = $platform;
+
+        return $this;
+    }
+
+    /**
+     * Validates a platform name.
+     *
+     * @param string $platform
+     *
+     * @return bool
+     * @throws InvalidArgument
+     */
+    protected function validatePlatform($platform)
+    {
+        if (in_array($platform, $this->validPlatforms())) {
+            return true;
+        }
+
+        throw new InvalidArgument("Invalid platform name: $platform");
     }
 
     /**
@@ -464,6 +543,8 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function savePageSource($filepath)
     {
+        $this->setupFilesystem();
+
         try {
             $this->filesystem->put($filepath, $this->pageSource());
         } catch (\Exception $e) {
@@ -1270,5 +1351,56 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     private function isLocator($wtf)
     {
         return is_string($wtf);
+    }
+
+    /**
+     * Returns an array of valid platform names.
+     *
+     * @return array
+     */
+    private function validPlatforms()
+    {
+        return [
+            'ANY',
+            'ANDROID',
+            'LINUX',
+            'MAC',
+            'UNIX',
+            'VISTA',
+            'WINDOWS',
+            'XP',
+        ];
+    }
+
+    /**
+     * Returns an array of valid browser names.
+     *
+     * @return array
+     */
+    private function validBrowsers()
+    {
+        return [
+            'firefox',
+            'firefox2',
+            'firefox3',
+            'firefoxproxy',
+            'firefoxchrome',
+            'googlechrome',
+            'safari',
+            'opera',
+            'iexplore',
+            'iexploreproxy',
+            'safariproxy',
+            'chrome',
+            'konqueror',
+            'mock',
+            'iehta',
+            'android',
+            'htmlunit',
+            'internet explorer',
+            'iphone',
+            'iPad',
+            'phantomjs',
+        ];
     }
 }
