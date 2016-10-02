@@ -11,6 +11,7 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 
 use Sepehr\PHPUnitSelenium\SeleniumTestCase;
+use Sepehr\PHPUnitSelenium\Utils\Filesystem;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchBrowser;
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
@@ -89,10 +90,11 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function doesNotCreateANewWebDriverIfAlreadyExists()
     {
-        $this->injectWebDriverMock();
-
-        $this->webDriverMock
-             ->shouldNotReceive('create');
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldNotReceive('create')
+                 ->getMock()
+        );
 
         $this->createSession();
 
@@ -102,14 +104,14 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function canForceToCreateANewWebDriverEvenThoughItAlreadyExists()
     {
-        $this->injectWebDriverMock();
-
-        $this->webDriverMock
-            ->shouldReceive('create')
-            ->once()
-            ->withAnyArgs()
-            ->andReturn(Mockery::self())
-            ->mock();
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('create')
+                 ->once()
+                 ->withAnyArgs()
+                 ->andReturn(Mockery::self())
+                 ->mock()
+        );
 
         $this->forceCreateSession();
 
@@ -119,7 +121,7 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function destroysWebDriverWhenDestroyingSession()
     {
-        $this->injectWebDriverMock();
+        $this->injectMockedWebDriver();
 
         $this->assertTrue($this->webDriverLoaded());
 
@@ -161,7 +163,7 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function returnsItsInstanceOfWebDriver()
     {
-        $this->injectWebDriverMock();
+        $this->injectMockedWebDriver();
 
         $this->assertInstanceOf(RemoteWebDriver::class, $this->webDriver());
     }
@@ -201,14 +203,13 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function returnsPageTitle()
     {
-        $this->injectWebDriverMock();
-
-        $expected = 'Some sample page title...';
-
-        $this->webDriverMock
-             ->shouldReceive('getTitle')
-             ->once()
-             ->andReturn($expected);
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('getTitle')
+                 ->once()
+                 ->andReturn($expected = 'Some sample page title...')
+                 ->getMock()
+        );
 
         $this->assertSame($expected, $this->pageTitle());
     }
@@ -216,29 +217,75 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function returnsPageSource()
     {
-        $this->injectWebDriverMock();
-
-        $expected = '<html><head><title>Sample page</title></head><body>Lorem ipsum...</body></html>';
-
-        $this->webDriverMock
-            ->shouldReceive('getPageSource')
-            ->once()
-            ->andReturn($expected);
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
+        );
 
         $this->assertSame($expected, $this->pageSource());
     }
 
     /** @test */
+    public function savesPageSourceToFile()
+    {
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
+        );
+
+        $this->injectMockedFilesystem(
+            Mockery::mock(Filesystem::class)
+                   ->shouldReceive('put')
+                   ->once()
+                   ->with($filepath = '/tmp/source.html', $source)
+                   ->andReturn(true)
+                   ->getMock()
+        );
+
+        $this->savePageSource($filepath);
+    }
+
+    /** @test */
+    public function throwsAnExceptionWhenSavingPageSourceIntoAnInvalidFile()
+    {
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('getPageSource')
+                 ->once()
+                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                 ->getMock()
+        );
+
+        $this->injectMockedFilesystem(
+            Mockery::mock(Filesystem::class)
+                   ->shouldReceive('put')
+                   ->once()
+                   ->with($filepath = '/some/invalid/path/source.html', $source)
+                   ->andThrow(InvalidArgument::class)
+                   ->getMock()
+        );
+
+        $this->expectException(InvalidArgument::class);
+
+        $this->savePageSource($filepath);
+    }
+
+    /** @test */
     public function returnsWebDriverCurrentUrl()
     {
-        $this->injectWebDriverMock();
-
-        $expected = 'https://github.com/';
-
-        $this->webDriverMock
-             ->shouldReceive('getCurrentURL')
-             ->once()
-             ->andReturn($expected);
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('getCurrentURL')
+                 ->once()
+                 ->andReturn($expected = 'https://github.com/')
+                 ->getMock()
+        );
 
         $this->assertSame($expected, $this->webDriverUrl());
     }
@@ -246,12 +293,22 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /**
      * Injects a mocked RemoteWebDriver into the SeleniumTestCase.
      *
-     * @param null|RemoteWebDriver $mockedWebDriver
+     * @param RemoteWebDriver|null $mockedWebDriver
      *
      * @return void
      */
-    private function injectWebDriverMock($mockedWebDriver = null)
+    private function injectMockedWebDriver($mockedWebDriver = null)
     {
         $this->setWebDriver($mockedWebDriver ? $mockedWebDriver : $this->webDriverMock);
+    }
+
+    /**
+     * Injects a mocked Filesystem into SeleniumTestCase.
+     *
+     * @param Filesystem $mockedFilesystem
+     */
+    private function injectMockedFilesystem(Filesystem $mockedFilesystem)
+    {
+        $this->setFilesystem($mockedFilesystem);
     }
 }
