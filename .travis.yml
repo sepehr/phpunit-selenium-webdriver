@@ -49,4 +49,4 @@ script:
   - vendor/bin/phpunit --coverage-clover tests/coverage/clover.xml
 
 after_script:
-  - vendor/bin/codacycoverage clover tests/coverage/clover.xml
+  - if [ "$TRAVIS_PHP_VERSION" == "7.0" ]; then vendor/bin/codacycoverage clover tests/coverage/clover.xml; fi;
