@@ -149,13 +149,12 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function createsADesiredCapabilitiesInstanceForAValidBrowser()
     {
-        $mock = Mockery::mock('alias:' . DesiredCapabilities::class);
-
-        $mock->shouldReceive($browser = 'firefox')
-             ->once()
-             ->withNoArgs()
-             ->andReturn(Mockery::self())
-             ->mock();
+        Mockery::mock('alias:' . DesiredCapabilities::class)
+               ->shouldReceive($browser = 'firefox')
+               ->once()
+               ->withNoArgs()
+               ->andReturn(Mockery::self())
+               ->mock();
 
         $this->setBrowser($browser);
 
@@ -176,13 +175,12 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function createsAnInstanceOfWebDriverBy()
     {
-        $mock = Mockery::mock('alias:' . WebDriverBy::class);
-
-        $mock->shouldReceive($mechanism = 'id')
-             ->once()
-             ->with($value = 'someElementId')
-             ->andReturn(Mockery::self())
-             ->mock();
+        Mockery::mock('alias:' . WebDriverBy::class)
+               ->shouldReceive($mechanism = 'id')
+               ->once()
+               ->with($value = 'someElementId')
+               ->andReturn(Mockery::self())
+               ->mock();
 
         $this->assertInstanceOf(
             WebDriverBy::class,
@@ -193,12 +191,11 @@ class SeleniumTestCaseTest extends SeleniumTestCase
     /** @test */
     public function throwsAnExceptionWhenCreatingAnInstanceOfWebDriverByWithInvalidMechanism()
     {
-        $mock = Mockery::mock('alias:' . WebDriverBy::class);
-
-        $mock->shouldReceive($mechanism = 'invalidMechanism')
-             ->once()
-             ->with($value = 'someValue')
-             ->andThrow(\Exception::class);
+        Mockery::mock('alias:' . WebDriverBy::class)
+               ->shouldReceive($mechanism = 'invalidMechanism')
+               ->once()
+               ->with($value = 'someValue')
+               ->andThrow(\Exception::class);
 
         $this->expectException(InvalidArgument::class);
 
