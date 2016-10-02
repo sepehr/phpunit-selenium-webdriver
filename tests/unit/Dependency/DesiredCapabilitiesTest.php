@@ -36,7 +36,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     /** @test */
     public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughInstantiating()
     {
-        $this->setBrowser($browser = WebDriverBrowserType::KONQUEROR);
+        $this->setBrowser(WebDriverBrowserType::KONQUEROR);
 
         // e.g. new DesiredCapabilities([...])
         Mockery::mock('overload:' . DesiredCapabilities::class);
