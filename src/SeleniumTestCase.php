@@ -169,7 +169,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         }
 
         $this->webDriver = null;
-        
+
         return $this;
     }
 

@@ -59,13 +59,18 @@ class SeleniumTestCaseTest extends SeleniumTestCase
              ->once()
              ->with(
                  $this->host,
-                 // @TODO: Do not touch DesiredCapabilities class
                  DesiredCapabilities::class,
                  $this->connectionTimeout,
                  $this->requestTimeout,
                  $this->httpProxy,
                  $this->httpProxyPort
              )
+             ->andReturn(Mockery::self())
+             ->mock();
+
+        $mock = Mockery::mock('alias:' . DesiredCapabilities::class);
+        $mock->shouldReceive($this->browser)
+             ->once()
              ->andReturn(Mockery::self())
              ->mock();
 
