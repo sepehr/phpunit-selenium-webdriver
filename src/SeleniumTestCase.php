@@ -166,10 +166,10 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         if ($this->webDriver instanceof RemoteWebDriver) {
             $this->webDriver->quit();
-
-            $this->webDriver = null;
         }
 
+        $this->webDriver = null;
+        
         return $this;
     }
 
