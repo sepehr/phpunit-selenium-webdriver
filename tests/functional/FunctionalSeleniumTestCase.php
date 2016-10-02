@@ -4,7 +4,7 @@ namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 
 use Sepehr\PHPUnitSelenium\SeleniumTestCase;
 
-abstract class BaseSeleniumTestCase extends SeleniumTestCase
+abstract class FunctionalSeleniumTestCase extends SeleniumTestCase
 {
 
     /**

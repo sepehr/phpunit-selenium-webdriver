@@ -5,7 +5,7 @@ namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
 
-class SeleniumTestCaseTest extends BaseSeleniumTestCase
+class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
 {
 
     // ----------------------------------------------------------------------------
