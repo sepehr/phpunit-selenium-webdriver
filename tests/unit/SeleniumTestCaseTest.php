@@ -68,11 +68,11 @@ class SeleniumTestCaseTest extends SeleniumTestCase
              ->andReturn(Mockery::self())
              ->mock();
 
-        $mock = Mockery::mock('alias:' . DesiredCapabilities::class);
-        $mock->shouldReceive($this->browser)
-             ->once()
-             ->andReturn(Mockery::self())
-             ->mock();
+        Mockery::mock('alias:' . DesiredCapabilities::class)
+               ->shouldReceive($this->browser)
+               ->once()
+               ->andReturn(Mockery::self())
+               ->mock();
 
         $this->createSession();
 
