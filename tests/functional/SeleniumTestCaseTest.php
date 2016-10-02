@@ -5,6 +5,12 @@ namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 
+/**
+ * If not running in a separate process, will conflict with unit tests.
+ *
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
 {
 
