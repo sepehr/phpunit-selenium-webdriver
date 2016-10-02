@@ -42,7 +42,9 @@ before_script:
   - sleep 3
 
 script:
-  - vendor/bin/phpunit --coverage-clover tests/coverage/clover.xml
+  # Don't generate coverage for functional tests, as they may give a false sense of security...
+  - vendor/bin/phpunit --testsuite unit --coverage-clover tests/coverage/clover.xml
+  - vendor/bin/phpunit --testsuite functional
 
 after_script:
   - if [ "$TRAVIS_PHP_VERSION" == "7.0" ]; then vendor/bin/codacycoverage clover tests/coverage/clover.xml; fi;
