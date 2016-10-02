@@ -3,7 +3,7 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Facebook\WebDriver\Exception\WebDriverCurlException;
-use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
+use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
 
 class SeleniumInteractionTest extends UnitSeleniumTestCase
 {

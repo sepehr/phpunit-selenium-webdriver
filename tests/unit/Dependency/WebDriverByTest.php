@@ -4,7 +4,7 @@ namespace Sepehr\PHPUnitSelenium\Tests\Unit\Dependency;
 
 use Mockery;
 use Facebook\WebDriver\WebDriverBy;
-use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**

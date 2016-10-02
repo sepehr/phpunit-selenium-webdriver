@@ -13,10 +13,10 @@ use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
-use Sepehr\PHPUnitSelenium\Utils\Filesystem;
-use Sepehr\PHPUnitSelenium\Exceptions\NoSuchElement;
-use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
-use Sepehr\PHPUnitSelenium\Exceptions\SeleniumNotRunning;
+use Sepehr\PHPUnitSelenium\Util\Filesystem;
+use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
+use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
 
 /**
  * SeleniumTestCase Class

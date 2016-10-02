@@ -1,8 +1,8 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Tests\Unit\Utils;
+namespace Sepehr\PHPUnitSelenium\Tests\Unit\Util;
 
-use Sepehr\PHPUnitSelenium\Utils\Filesystem;
+use Sepehr\PHPUnitSelenium\Util\Filesystem;
 
 class FilesystemTest extends \PHPUnit_Framework_TestCase
 {

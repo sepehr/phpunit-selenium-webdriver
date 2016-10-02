@@ -2,7 +2,7 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit\Validation;
 
-use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 class BrowserValidationTest extends UnitSeleniumTestCase

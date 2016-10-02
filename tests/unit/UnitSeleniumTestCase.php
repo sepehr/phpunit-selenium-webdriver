@@ -3,10 +3,9 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
+use Sepehr\PHPUnitSelenium\SeleniumTestCase;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-
-use Sepehr\PHPUnitSelenium\SeleniumTestCase;
 
 abstract class UnitSeleniumTestCase extends SeleniumTestCase
 {

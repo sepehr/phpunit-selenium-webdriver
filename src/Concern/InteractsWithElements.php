@@ -1,6 +1,6 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Concerns;
+namespace Sepehr\PHPUnitSelenium\Concern;
 
 trait InteractsWithElements
 {

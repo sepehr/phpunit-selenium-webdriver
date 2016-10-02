@@ -3,7 +3,7 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit\Dependency;
 
 use Mockery;
-use Sepehr\PHPUnitSelenium\Utils\Filesystem;
+use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**

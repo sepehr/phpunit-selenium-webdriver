@@ -1,6 +1,6 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Utils;
+namespace Sepehr\PHPUnitSelenium\Util;
 
 class Filesystem
 {

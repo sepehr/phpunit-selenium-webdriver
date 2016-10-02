@@ -1,6 +1,6 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Exceptions;
+namespace Sepehr\PHPUnitSelenium\Exception;
 
 class Exception extends \Exception
 {

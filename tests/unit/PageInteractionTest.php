@@ -3,8 +3,8 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
-use Sepehr\PHPUnitSelenium\Utils\Filesystem;
-use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Util\Filesystem;
+use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 
 class PageInteractionTest extends UnitSeleniumTestCase
 {
