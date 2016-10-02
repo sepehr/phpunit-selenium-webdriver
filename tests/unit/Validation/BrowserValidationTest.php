@@ -1,10 +1,11 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Tests\Unit;
+namespace Sepehr\PHPUnitSelenium\Tests\Unit\Validation;
 
 use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
-class BrowserTest extends UnitSeleniumTestCase
+class BrowserValidationTest extends UnitSeleniumTestCase
 {
 
     /**
