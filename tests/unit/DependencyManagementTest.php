@@ -27,7 +27,7 @@ use Sepehr\PHPUnitSelenium\Exceptions\InvalidArgument;
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
-class DependencyHandlingTest extends UnitSeleniumTestCase
+class DependencyManagementTest extends UnitSeleniumTestCase
 {
 
     /** @test */
@@ -36,7 +36,12 @@ class DependencyHandlingTest extends UnitSeleniumTestCase
         $this->assertFalse($this->webDriverLoaded());
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * We can easily inject a mocked WebDriver into the testcase,
+     * but here we're testing the process of instantiating it.
+     */
     public function createsAWebDriverInstanceUponCreatingNewSessions()
     {
         $this->webDriverMock
@@ -79,7 +84,7 @@ class DependencyHandlingTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function canForceToCreateANewWebDriverEvenThoughItAlreadyExists()
+    public function canBeForcedToCreateANewWebDriverEvenThoughItAlreadyExists()
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
@@ -96,14 +101,14 @@ class DependencyHandlingTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function destroysWebDriverWhenDestroyingSession()
+    public function unloadsWebDriverWhenDestroyingSession()
     {
         $this->injectMockedWebDriver();
 
         $this->assertTrue($this->webDriverLoaded());
 
-        // We do not need to set an expectation to receive a "quit()" call
-        // on the driver, as it's already set by default.
+        // We do not need to set an expectation to receive a "quit()"
+        // call on the WebDriver, as it's already set by default.
         // See: UnitSeleniumTestCase::setUp()
         $this->destroySession();
 
