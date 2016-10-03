@@ -2,7 +2,6 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit\Validation;
 
-use phpmock\mockery\PHPMockery;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
@@ -57,11 +56,6 @@ class UrlValidationTest extends UnitSeleniumTestCase
                  ->andReturn($expected = 'https://github.com/sepehr')
                  ->getMock()
         );
-
-        // Mock PHP's buit-in sleep() with SUT's namespace
-        PHPMockery::mock('Sepehr\PHPUnitSelenium', 'sleep')
-                  ->once()
-                  ->andReturn(0);
 
         $this->updateUrl();
 
