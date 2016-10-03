@@ -10,6 +10,27 @@ class PageInteractionTest extends UnitSeleniumTestCase
 {
 
     /** @test */
+    public function visitsAPageUrl()
+    {
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                 ->shouldReceive('get')
+                 ->once()
+                 ->with($url = 'https://github.com/sepehr')
+                 ->andReturn(Mockery::self())
+                 ->mock()
+                 ->shouldReceive('getCurrentURL')
+                 ->once()
+                 ->andReturn($url)
+                 ->getMock()
+        );
+
+        $this->visit($url);
+
+        $this->assertSame($url, $this->url());
+    }
+
+    /** @test */
     public function returnsPageTitle()
     {
         $this->injectMockedWebDriver(
