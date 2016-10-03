@@ -1,11 +1,12 @@
 <?php
 
-namespace Sepehr\PHPUnitSelenium\Tests\Unit;
+namespace Sepehr\PHPUnitSelenium\Tests\Unit\Validation;
 
 use phpmock\mockery\PHPMockery;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
+use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
-class UrlHandlingTest extends UnitSeleniumTestCase
+class UrlValidationTest extends UnitSeleniumTestCase
 {
 
     /** @test */
