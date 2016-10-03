@@ -13,6 +13,7 @@ use Facebook\WebDriver\Remote\WebDriverCapabilityType;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
+use Sepehr\PHPUnitSelenium\Util\Locator;
 use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
@@ -617,48 +618,39 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * Tries to find elements by examining CSS selector, name, value or text.
      *
      * Examination order:
-     * 1. CSS selector
-     * 2. Name
-     * 3. ID
-     * 4. Value
-     * 5. Text
-     * 6. XPath
+     * - XPath
+     * - CSS selector
+     * - Name
+     * - ID
+     * - Value
+     * - Text
      *
      * NOTE:
-     * This is an expensive method; Prefer to utilize explicit find
-     * methods instead unless operating in "whadeva" mode!
+     * This is an expensive method; Prefer to utilize explicit finder
+     * methods instead, unless operating in "whadeva" mode!
      *
      * @param string $locator Element locator.
      *
      * @return RemoteWebElement|RemoteWebElement[]
-     * @see findBySelector(), findByName(), findById(), findByValue(), findByText(), findByXpath()
-     * @todo Guess the type of locator based on its format
+     * @throws NoSuchElement
      */
     protected function find($locator)
     {
-        $elements = $this->findBySelector($locator);
+        if (Locator::isXpath($locator)) {
+            return $this->findByXpath($locator);
+        }
 
-        if (empty($elements)) {
-            $elements = $this->findByName($locator);
+        $finders = ['findBySelector', 'findByName', 'findById', 'findByValue', 'findByText'];
 
-            if (empty($elements)) {
-                $elements = $this->findById($locator);
+        foreach ($finders as $finder) {
+            $elements = $this->$finder($locator);
 
-                if (empty($elements)) {
-                    $elements = $this->findByValue($locator);
-
-                    if (empty($elements)) {
-                        $elements = $this->findByText($locator);
-
-                        if (empty($elements)) {
-                            $elements = $this->findByXpath($locator);
-                        }
-                    }
-                }
+            if (! empty($elements)) {
+                return $elements;
             }
         }
 
-        return $elements;
+        throw new NoSuchElement("Could not find the element with criteria: $locator");
     }
 
     /**
