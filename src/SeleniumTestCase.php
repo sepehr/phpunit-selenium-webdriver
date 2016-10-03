@@ -943,6 +943,19 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         return $this->findBy(WebDriverBy::tagName($tag));
     }
 
+    /**
+     * Find elements by tabindex.
+     *
+     * @param int $tabIndex
+     * @param string $element
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    protected function findByTabIndex($tabIndex, $element = '*')
+    {
+        return $this->findByAttribute('tabindex', (string) $tabIndex, $element, true);
+    }
+
     // ----------------------------------------------------------------------------
     // Element Interaction
     // ----------------------------------------------------------------------------
