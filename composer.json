@@ -22,7 +22,8 @@
         "facebook/webdriver": "^1.1",
         "codacy/coverage": "^1.0",
         "mockery/mockery": "^0.9.5",
-        "php-mock/php-mock-mockery": "^1.1"
+        "php-mock/php-mock-mockery": "^1.1",
+        "symfony/css-selector": "^3.1"
     },
     "autoload": {
         "psr-4": {
