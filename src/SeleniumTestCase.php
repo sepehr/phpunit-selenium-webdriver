@@ -504,7 +504,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         $this->wait();
 
         $this->setUrl($this->webDriverUrl());
-        $this->setUrl($this->webDriverUrl());
 
         return $this;
     }
