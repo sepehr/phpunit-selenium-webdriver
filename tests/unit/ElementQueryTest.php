@@ -197,6 +197,8 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ['findByNameOrId', ['someName'], 'name'],
             ['findByLinkText', ['someText'], 'linkText'],
             ['findByLinkPartialText', ['someText'], 'partialLinkText'],
+            ['findByLinkHref', ['https://g.cn/'], 'cssSelector', "a[href='https://g.cn/']"],
+            ['findByLinkPartialHref', ['/sepehr'], 'cssSelector', "a[href*='/sepehr']"],
             ['findByXpath', ['/html/body/div/div[2]/div[1]/h1'], 'xpath'],
             ['findByTag', ['someTag'], 'tagName'],
             ['findByTabIndex', [7, '*'], 'cssSelector', "*[tabindex='7']"],

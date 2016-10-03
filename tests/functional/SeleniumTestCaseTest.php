@@ -259,6 +259,22 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
+    public function findsLinkByItsHref()
+    {
+        $element = $this->visitTestFile()->findByLinkHref($href = 'http://www.seleniumhq.org/');
+
+        $this->assertEquals($href, $element->getAttribute('href'));
+    }
+
+    /** @test */
+    public function findsLinkByItsPartialHref()
+    {
+        $element = $this->visitTestFile()->findByLinkPartialHref($href = 'mhq.org');
+
+        $this->assertContains($href, $element->getAttribute('href'));
+    }
+
+    /** @test */
     public function findsElementByXpath()
     {
         $element = $this->visitTestFile()->findByXpath('//*[@id="main"]/section[1]/p');
