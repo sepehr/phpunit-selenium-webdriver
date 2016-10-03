@@ -23,4 +23,14 @@ class FilesystemTest extends UnitSeleniumTestCase
             $this->createFilesystemInstance()
         );
     }
+
+    /** @test */
+    public function setupsAFilesystemInstance()
+    {
+        Mockery::mock('overload:' . Filesystem::class);
+
+        $this->setupFilesystem();
+
+        $this->assertInstanceOf(Filesystem::class, $this->filesystem);
+    }
 }
