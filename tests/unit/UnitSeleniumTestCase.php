@@ -55,7 +55,7 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     protected function injectMockedSleep()
     {
         PHPMockery::mock('Sepehr\PHPUnitSelenium', 'sleep')
-                  ->zeroOrMoreTimes()
-                  ->andReturn(0);
+            ->zeroOrMoreTimes()
+            ->andReturn(0);
     }
 }

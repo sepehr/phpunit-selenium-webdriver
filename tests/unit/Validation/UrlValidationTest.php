@@ -51,10 +51,10 @@ class UrlValidationTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getCurrentURL')
-                 ->once()
-                 ->andReturn($expected = 'https://github.com/sepehr')
-                 ->getMock()
+                ->shouldReceive('getCurrentURL')
+                ->once()
+                ->andReturn($expected = 'https://github.com/sepehr')
+                ->getMock()
         );
 
         $this->updateUrl();
@@ -77,10 +77,10 @@ class UrlValidationTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getCurrentURL')
-                 ->once()
-                 ->andReturn($expected = 'https://github.com/')
-                 ->getMock()
+                ->shouldReceive('getCurrentURL')
+                ->once()
+                ->andReturn($expected = 'https://github.com/')
+                ->getMock()
         );
 
         $this->assertSame($expected, $this->webDriverUrl());

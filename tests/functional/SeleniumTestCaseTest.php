@@ -44,8 +44,8 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
         $url = $this->getTestFileUrl('test.html');
 
         $this->visit($url)
-             ->seePageIs($url)
-             ->dontSeePageIs('https://github.com/sepehr');
+            ->seePageIs($url)
+            ->dontSeePageIs('https://github.com/sepehr');
     }
 
     // ----------------------------------------------------------------------------
@@ -62,8 +62,8 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     public function performsAssertionsAgainstPageSource()
     {
         $this->visitTestFile()
-             ->see('Webdriver-backed Selenium testcase')
-             ->dontSee('an area of the mind which could be called unsane, beyond sanity and yet not insane.');
+            ->see('Webdriver-backed Selenium testcase')
+            ->dontSee('an area of the mind which could be called unsane, beyond sanity and yet not insane.');
     }
 
     // ----------------------------------------------------------------------------
@@ -83,10 +83,10 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     public function performsAssertionsAgainstPageTitle()
     {
         $this->visitTestFile()
-             ->seeTitle($this->testFileTitle)
-             ->seeTitleContains(substr($this->testFileTitle, 0, 5))
-             ->dontSeeTitle('There is fear to face...')
-             ->dontSeeTitleContains('...but happiness');
+            ->seeTitle($this->testFileTitle)
+            ->seeTitleContains(substr($this->testFileTitle, 0, 5))
+            ->dontSeeTitle('There is fear to face...')
+            ->dontSeeTitleContains('...but happiness');
     }
 
     // ----------------------------------------------------------------------------
@@ -96,8 +96,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementByName()
     {
-        $element = $this->visitTestFile()
-                        ->findByName($name = 'findMeByName');
+        $element = $this->visitTestFile()->findByName($name = 'findMeByName');
 
         $this->assertSame($name, $element->getAttribute('name'));
     }
@@ -105,8 +104,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementsByClass()
     {
-        $elements = $this->visitTestFile()
-                         ->findByClass($class = 'findMeByClass');
+        $elements = $this->visitTestFile()->findByClass($class = 'findMeByClass');
 
         foreach ($elements as $element) {
             $this->assertSame($class, $element->getAttribute('class'));
@@ -116,8 +114,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementById()
     {
-        $element = $this->visitTestFile()
-                        ->findById($id = 'findMeById');
+        $element = $this->visitTestFile()->findById($id = 'findMeById');
 
         $this->assertSame($id, $element->getAttribute('id'));
     }
@@ -125,8 +122,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementByCssSelector()
     {
-        $element = $this->visitTestFile()
-                        ->findBySelector('#main > section p.lead');
+        $element = $this->visitTestFile()->findBySelector('#main > section p.lead');
 
         $this->assertSame(
             'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
@@ -144,8 +140,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
      */
     public function findsElementByValue($value, $tagName)
     {
-        $element = $this->visitTestFile()
-                        ->findByValue($value, $tagName);
+        $element = $this->visitTestFile()->findByValue($value, $tagName);
 
         $this->assertSame($value, $element->getAttribute('value'));
     }
@@ -153,8 +148,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementsByPartialValue()
     {
-        $elements = $this->visitTestFile()
-                         ->findByPartialValue($partialValue = 'ByValue');
+        $elements = $this->visitTestFile()->findByPartialValue($partialValue = 'ByValue');
 
         foreach ($elements as $element) {
             $this->assertContains($partialValue, $element->getAttribute('value'));
@@ -171,8 +165,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
      */
     public function findsElementByText($text, $tagName)
     {
-        $element = $this->visitTestFile()
-                        ->findByText($text, $tagName);
+        $element = $this->visitTestFile()->findByText($text, $tagName);
 
         $this->assertSame($text, $element->getText());
     }
@@ -180,8 +173,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementsByPartialText()
     {
-        $elements = $this->visitTestFile()
-                         ->findByPartialText($partialText = 'ByText');
+        $elements = $this->visitTestFile()->findByPartialText($partialText = 'ByText');
 
         foreach ($elements as $element) {
             $this->assertContains($partialText, $element->getText());
@@ -211,8 +203,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementByPartialTextOrValue()
     {
-        $elements = $this->visitTestFile()
-                         ->findByPartialTextOrValue($criteria = 'find');
+        $elements = $this->visitTestFile()->findByPartialTextOrValue($criteria = 'find');
 
         foreach ($elements as $element) {
             $test = $element->getAttribute('value') . $element->getText();
@@ -238,8 +229,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsLinkByItsText()
     {
-        $element = $this->visitTestFile()
-                        ->findByLinkText($text = 'View on github');
+        $element = $this->visitTestFile()->findByLinkText($text = 'View on github');
 
         $this->assertSame($text, $element->getText());
     }
@@ -247,8 +237,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsLinkByItsPartialText()
     {
-        $element = $this->visitTestFile()
-                        ->findByLinkPartialText($text = 'leniumHQ');
+        $element = $this->visitTestFile()->findByLinkPartialText($text = 'leniumHQ');
 
         $this->assertContains($text, $element->getText());
     }
@@ -256,8 +245,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementByXpath()
     {
-        $element = $this->visitTestFile()
-                        ->findByXpath('//*[@id="main"]/section[1]/p');
+        $element = $this->visitTestFile()->findByXpath('//*[@id="main"]/section[1]/p');
 
         $this->assertSame(
             'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
@@ -268,8 +256,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementsByTagName()
     {
-        $elements = $this->visitTestFile()
-                         ->findByTag($tagName = 'a');
+        $elements = $this->visitTestFile()->findByTag($tagName = 'a');
 
         foreach ($elements as $element) {
             $this->assertSame($tagName, $element->getTagName());
@@ -286,8 +273,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
      */
     public function findsElementsByLocator($locator, $text)
     {
-        $element = $this->visitTestFile()
-                        ->find($locator);
+        $element = $this->visitTestFile()->find($locator);
 
         $this->assertSame($text, $element->getText());
     }

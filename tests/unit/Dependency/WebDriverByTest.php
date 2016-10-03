@@ -18,11 +18,11 @@ class WebDriverByTest extends UnitSeleniumTestCase
     public function createsAnInstanceOfWebDriverBy()
     {
         Mockery::mock('alias:' . WebDriverBy::class)
-               ->shouldReceive($mechanism = 'id')
-               ->once()
-               ->with($value = 'someElementId')
-               ->andReturn(Mockery::self())
-               ->mock();
+            ->shouldReceive($mechanism = 'id')
+            ->once()
+            ->with($value = 'someElementId')
+            ->andReturn(Mockery::self())
+            ->mock();
 
         $this->assertInstanceOf(
             WebDriverBy::class,
@@ -34,10 +34,10 @@ class WebDriverByTest extends UnitSeleniumTestCase
     public function throwsAnExceptionWhenCreatingAnInstanceOfWebDriverByWithInvalidMechanism()
     {
         Mockery::mock('alias:' . WebDriverBy::class)
-               ->shouldReceive($mechanism = 'invalidMechanism')
-               ->once()
-               ->with($value = 'someValue')
-               ->andThrow(\Exception::class);
+            ->shouldReceive($mechanism = 'invalidMechanism')
+            ->once()
+            ->with($value = 'someValue')
+            ->andThrow(\Exception::class);
 
         $this->expectException(InvalidArgument::class);
 

@@ -123,11 +123,11 @@ class ElementQueryTest extends UnitSeleniumTestCase
         );
 
         Mockery::mock('alias:' . WebDriverBy::class)
-               ->shouldReceive($mechanism)
-               ->once()
-               ->with($alt ? $alt : $args[0])
-               ->andReturn(Mockery::self())
-               ->mock();
+            ->shouldReceive($mechanism)
+            ->once()
+            ->with($alt ? $alt : $args[0])
+            ->andReturn(Mockery::self())
+            ->mock();
 
         $this->assertSame($expected, $this->$api(...$args));
     }
@@ -156,15 +156,15 @@ class ElementQueryTest extends UnitSeleniumTestCase
         );
 
         Mockery::mock('alias:' . WebDriverBy::class)
-               ->shouldReceive($mechanism[0])
-               ->once()
-               ->with($alt[0])
-               ->andReturn(Mockery::self())
-               ->shouldReceive($mechanism[1])
-               ->once()
-               ->with($alt[1])
-               ->andReturn(Mockery::self())
-               ->mock();
+            ->shouldReceive($mechanism[0])
+            ->once()
+            ->with($alt[0])
+            ->andReturn(Mockery::self())
+            ->shouldReceive($mechanism[1])
+            ->once()
+            ->with($alt[1])
+            ->andReturn(Mockery::self())
+            ->mock();
 
         $this->assertSame($expected, $this->$api(...$args));
     }

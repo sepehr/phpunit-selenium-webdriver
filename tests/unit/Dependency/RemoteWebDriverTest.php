@@ -29,24 +29,24 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     public function createsAWebDriverInstanceUponCreatingNewSessions()
     {
         $this->webDriverMock
-             ->shouldReceive('create')
-             ->once()
-             ->with(
-                 $this->host,
-                 DesiredCapabilities::class,
-                 $this->connectionTimeout,
-                 $this->requestTimeout,
-                 $this->httpProxy,
-                 $this->httpProxyPort
-             )
-             ->andReturn(Mockery::self())
-             ->mock();
+            ->shouldReceive('create')
+            ->once()
+            ->with(
+                $this->host,
+                DesiredCapabilities::class,
+                $this->connectionTimeout,
+                $this->requestTimeout,
+                $this->httpProxy,
+                $this->httpProxyPort
+            )
+            ->andReturn(Mockery::self())
+            ->mock();
 
         Mockery::mock('alias:' . DesiredCapabilities::class)
-               ->shouldReceive($this->browser)
-               ->once()
-               ->andReturn(Mockery::self())
-               ->mock();
+            ->shouldReceive($this->browser)
+            ->once()
+            ->andReturn(Mockery::self())
+            ->mock();
 
         $this->createSession();
 
@@ -58,8 +58,8 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldNotReceive('create')
-                 ->getMock()
+                ->shouldNotReceive('create')
+                ->getMock()
         );
 
         $this->createSession();
@@ -72,11 +72,11 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('create')
-                 ->once()
-                 ->withAnyArgs()
-                 ->andReturn(Mockery::self())
-                 ->mock()
+                ->shouldReceive('create')
+                ->once()
+                ->withAnyArgs()
+                ->andReturn(Mockery::self())
+                ->mock()
         );
 
         $this->forceCreateSession();

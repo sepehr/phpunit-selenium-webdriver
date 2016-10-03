@@ -14,15 +14,15 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('get')
-                 ->once()
-                 ->with($url = 'https://github.com/sepehr')
-                 ->andReturn(Mockery::self())
-                 ->mock()
-                 ->shouldReceive('getCurrentURL')
-                 ->once()
-                 ->andReturn($url)
-                 ->getMock()
+                ->shouldReceive('get')
+                ->once()
+                ->with($url = 'https://github.com/sepehr')
+                ->andReturn(Mockery::self())
+                ->mock()
+                ->shouldReceive('getCurrentURL')
+                ->once()
+                ->andReturn($url)
+                ->getMock()
         );
 
         $this->visit($url);
@@ -35,10 +35,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getTitle')
-                 ->once()
-                 ->andReturn($expected = 'Some sample page title...')
-                 ->getMock()
+                ->shouldReceive('getTitle')
+                ->once()
+                ->andReturn($expected = 'Some sample page title...')
+                ->getMock()
         );
 
         $this->assertSame($expected, $this->pageTitle());
@@ -49,10 +49,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getPageSource')
-                 ->once()
-                 ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
-                 ->getMock()
+                ->shouldReceive('getPageSource')
+                ->once()
+                ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
+                ->getMock()
         );
 
         $this->assertSame($expected, $this->pageSource());
@@ -63,19 +63,19 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getPageSource')
-                 ->once()
-                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                 ->getMock()
+                ->shouldReceive('getPageSource')
+                ->once()
+                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                ->getMock()
         );
 
         $this->injectMockedFilesystem(
             Mockery::mock(Filesystem::class)
-                   ->shouldReceive('put')
-                   ->once()
-                   ->with($filepath = '/tmp/source.html', $source)
-                   ->andReturn(true)
-                   ->getMock()
+                ->shouldReceive('put')
+                ->once()
+                ->with($filepath = '/tmp/source.html', $source)
+                ->andReturn(true)
+                ->getMock()
         );
 
         $this->savePageSource($filepath);
@@ -86,19 +86,19 @@ class PageInteractionTest extends UnitSeleniumTestCase
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
-                 ->shouldReceive('getPageSource')
-                 ->once()
-                 ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                 ->getMock()
+                ->shouldReceive('getPageSource')
+                ->once()
+                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
+                ->getMock()
         );
 
         $this->injectMockedFilesystem(
             Mockery::mock(Filesystem::class)
-                   ->shouldReceive('put')
-                   ->once()
-                   ->with($filepath = '/some/invalid/path/source.html', $source)
-                   ->andThrow(InvalidArgument::class)
-                   ->getMock()
+                ->shouldReceive('put')
+                ->once()
+                ->with($filepath = '/some/invalid/path/source.html', $source)
+                ->andThrow(InvalidArgument::class)
+                ->getMock()
         );
 
         $this->expectException(InvalidArgument::class);
