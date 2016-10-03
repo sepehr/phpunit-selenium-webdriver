@@ -920,7 +920,32 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its XPath.
+     * Find links by the href attribute.
+     *
+     * @param string $href
+     * @param bool $strict
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    protected function findByLinkHref($href, $strict = true)
+    {
+        return $this->findByAttribute('href', $href, 'a', $strict);
+    }
+
+    /**
+     * Find links by partial href attribute.
+     *
+     * @param string $href
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    protected function findByLinkPartialHref($href)
+    {
+        return $this->findByLinkHref($href, false);
+    }
+
+    /**
+     * Find elements by XPath.
      *
      * @param $xpath
      *
