@@ -425,14 +425,12 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     public static function locatorTextProvider()
     {
         return [
-            ['.findMeByClass:first-child', 'This element can be found by this class: findMeByClass'],
             ['findMeByName', ''],
             ['findInputByValue', ''],
-            ['findMeById', 'This element can be found by its ID: findMeById'],
             ['findButtonByText', 'findButtonByText'],
-            /* This fails the fuckin test, fix find():
+            ['findMeById', 'This element can be found by its ID: findMeById'],
+            ['.findMeByClass:first-child', 'This element can be found by this class: findMeByClass'],
             ['//*[@id="main"]/section[1]/p', 'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.'],
-            */
         ];
     }
 }
