@@ -78,7 +78,7 @@ class UrlHandlingTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function returnsWebDriverCurrentUrl()
+    public function proxiesWebDriverCurrentUrl()
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
