@@ -279,6 +279,14 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
         }
     }
 
+    /** @test */
+    public function findsElementByTabIndex()
+    {
+        $element = $this->visitTestFile()->findByTabIndex($tabindex = 7);
+
+        $this->assertEquals($tabindex, $element->getAttribute('tabindex'));
+    }
+
     /**
      * @test
      *

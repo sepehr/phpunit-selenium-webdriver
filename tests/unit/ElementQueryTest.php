@@ -199,6 +199,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ['findByLinkPartialText', ['someText'], 'partialLinkText'],
             ['findByXpath', ['/html/body/div/div[2]/div[1]/h1'], 'xpath'],
             ['findByTag', ['someTag'], 'tagName'],
+            ['findByTabIndex', [7, '*'], 'cssSelector', "*[tabindex='7']"],
         ];
     }
 
