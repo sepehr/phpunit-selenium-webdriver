@@ -185,6 +185,8 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ['findBySelector', ['ul > li .selector'], 'cssSelector'],
             ['findByClass', ['someClass'], 'cssSelector', '.someClass'],
             ['findById', ['someId'], 'id'],
+            ['findByAttribute', ['data-dummy', 'someAttr', '*'], 'cssSelector', "*[data-dummy='someAttr']"],
+            ['findByPartialAttribute', ['data-dummy', 'someAttr', '*'], 'cssSelector', "*[data-dummy*='someAttr']"],
             ['findByValue', ['someValue', '*'], 'cssSelector', "*[value='someValue']"],
             ['findByPartialValue', ['someValue', '*'], 'cssSelector', "*[value*='someValue']"],
             ['findByText', ['someText', '*'], 'xpath', "//*[text()='someText']"],
