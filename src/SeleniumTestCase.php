@@ -744,6 +744,39 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Find elements by attributes.
+     *
+     * @param string $attribute Target attribute, e.g. href.
+     * @param string|null $value Value to check for.
+     * @param string $element Target element tag.
+     * @param bool $strict Strict comparison or not.
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    protected function findByAttribute($attribute, $value = null, $element = '*', $strict = true)
+    {
+        $op    = $strict ? '=' : '*=';
+        $query = $value ? "{$attribute}{$op}'{$value}'" : $attribute;
+
+        return $this->findBySelector("{$element}[$query]");
+    }
+
+    /**
+     * Find elements by partial attributes.
+     *
+     * @param string $attribute Target attribute, e.g. href.
+     * @param string $value Value to check for.
+     * @param string $element Target element tag.
+     * @param bool $strict Strict comparison or not.
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     */
+    protected function findByPartialAttribute($attribute, $value, $element = '*', $strict = true)
+    {
+        return $this->findByAttribute($attribute, $value, $element, false);
+    }
+
+    /**
      * Find elements by its value.
      *
      * @param string $value Value to check for.
@@ -754,9 +787,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByValue($value, $element = '*', $strict = true)
     {
-        $op = $strict ? '=' : '*=';
-
-        return $this->findBySelector("{$element}[value$op'$value']");
+        return $this->findByAttribute('value', $value, $element, $strict);
     }
 
     /**
