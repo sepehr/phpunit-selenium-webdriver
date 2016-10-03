@@ -17,7 +17,9 @@ class PlatformValidationTest extends UnitSeleniumTestCase
      */
     public function acceptsValidPlatforms($platform)
     {
-        $this->assertTrue($this->validatePlatform($platform));
+        $this->setPlatform($platform);
+
+        $this->assertSame($platform, $this->platform);
     }
 
     /** @test */
