@@ -133,6 +133,22 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     /**
      * @test
      *
+     * @param string $attribute
+     * @param string $value
+     * @param string $tagName
+     *
+     * @dataProvider attributeValueTagProvider
+     */
+    public function findsElementByAttribute($attribute, $value, $tagName)
+    {
+        $element = $this->visitTestFile()->findByAttribute($attribute, $value, $tagName);
+
+        $this->assertSame($value, $element->getAttribute($attribute));
+    }
+
+    /**
+     * @test
+     *
      * @param string $value
      * @param string $tagName
      *
@@ -332,6 +348,20 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     // ----------------------------------------------------------------------------
     // Data Providers
     // ----------------------------------------------------------------------------
+
+    /**
+     * Data provider for attribute/value/tag pairs.
+     *
+     * @return array
+     */
+    public static function attributeValueTagProvider()
+    {
+        return [
+            ['data-dummy', 'findMeByAttribute', 'p'],
+            ['href', 'https://github.com/sepehr/phpunit-selenium-webdriver', 'a'],
+            ['placeholder', 'findMeByMyPlaceholder', '*'],
+        ];
+    }
 
     /**
      * Data provider for value/tag pairs.
