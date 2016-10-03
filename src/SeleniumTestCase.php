@@ -696,7 +696,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its name attribute.
+     * Find elements by name attribute.
      *
      * @param string $name
      *
@@ -708,7 +708,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its CSS selector.
+     * Find elements by CSS selector.
      *
      * @param string $selector
      *
@@ -720,7 +720,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its CSS class.
+     * Find elements by CSS class.
      *
      * @param string $class
      *
@@ -732,7 +732,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its ID attribute.
+     * Find elements by ID attribute.
      *
      * @param string $id
      *
@@ -777,7 +777,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its value.
+     * Find elements by value.
      *
      * @param string $value Value to check for.
      * @param string $element Target element tag.
@@ -791,7 +791,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its containing value.
+     * Find elements by containing value.
      *
      * @param string $value Value to check for.
      * @param string $element Target element tag.
@@ -804,7 +804,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its text.
+     * Find elements by text.
      *
      * @param string $text Text to check for.
      * @param string $element Target element tag.
@@ -832,7 +832,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its containing text.
+     * Find elements by containing text.
      *
      * @param string $text Text to check for.
      * @param string $element Target element tag.
@@ -845,7 +845,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its text or value.
+     * Find elements by text or value.
      *
      * @param string $criteria Text or value to check for.
      * @param string $element Target element tag.
@@ -863,7 +863,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its containing text or value.
+     * Find elements by containing text or value.
      *
      * @param string $criteria Text or value to check for.
      * @param string $element Target element tag.
@@ -896,7 +896,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its link text.
+     * Find elements by link text.
      *
      * @param string $text
      *
@@ -908,7 +908,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Find elements by its partial link text.
+     * Find elements by partial link text.
      *
      * @param string $partialText
      *
