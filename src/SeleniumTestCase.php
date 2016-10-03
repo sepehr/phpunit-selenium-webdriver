@@ -636,11 +636,11 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function find($locator)
     {
-        if (Locator::isXpath($locator)) {
-            return $this->findByXpath($locator);
-        }
-
         $finders = ['findBySelector', 'findByName', 'findById', 'findByValue', 'findByText'];
+
+        if (Locator::isXpath($locator)) {
+            array_unshift($finders, 'findByXpath');
+        }
 
         foreach ($finders as $finder) {
             $elements = $this->$finder($locator);
