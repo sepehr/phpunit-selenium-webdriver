@@ -448,9 +448,14 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $url Base URL to be set.
      *
      * @return $this
+     * @throws InvalidArgument
      */
     protected function setBaseUrl($url)
     {
+        if (! $this->validateUrl($url)) {
+            throw new InvalidArgument("Invalid base URL provided: $url");
+        }
+
         $this->baseUrl = $url;
 
         return $this;
@@ -462,12 +467,31 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param string $url URL to be set as current URL.
      *
      * @return $this
+     * @throws InvalidArgument
      */
     protected function setUrl($url)
     {
-        $this->currentUrl = $this->normalizeUrl($url);
+        $url = $this->normalizeUrl($url);
+
+        if (! $this->validateUrl($url)) {
+            throw new InvalidArgument("Invalid URL provided: $url");
+        }
+
+        $this->currentUrl = $url;
 
         return $this;
+    }
+
+    /**
+     * Validates provided URL.
+     *
+     * @param string $url
+     *
+     * @return bool
+     */
+    protected function validateUrl($url)
+    {
+        return !! filter_var($url, FILTER_VALIDATE_URL);
     }
 
     /**
@@ -527,9 +551,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 
         $this->webDriver->get($this->url());
 
-        $this->updateUrl();
-
-        return $this;
+        return $this->updateUrl();
     }
 
     /**
@@ -1335,9 +1357,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
             return $path;
         }
 
-        if ($path[0] === '/') {
-            $path = substr($path, 1);
-        }
+        $path = ltrim($path, '/');
 
         if (strpos($path, 'http') !== 0) {
             $path = rtrim($this->baseUrl, '/') . '/' . $path;
