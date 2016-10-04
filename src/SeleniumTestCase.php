@@ -1389,13 +1389,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         // Execute all actions for each element
         foreach ($elements as $element) {
             foreach ($action as $method => $args) {
-                if (! method_exists($element, $method)) {
-                    throw new InvalidArgument("Invalid element action: $method");
-                }
-
                 is_array($args) or $args = [$args];
 
-                call_user_func_array([$element, $method], $args);
+                try {
+                    $element->$method(...$args);
+                } catch (\Exception $e) {
+                    throw new InvalidArgument("Invalid element action: $method");
+                }
             }
         }
 
