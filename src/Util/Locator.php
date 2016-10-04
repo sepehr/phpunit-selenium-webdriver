@@ -33,9 +33,8 @@ class Locator
      */
     public static function isXpath($xpath)
     {
-        $domDoc   = new \DOMDocument('1.0', 'UTF-8');
-        $domXpath = new \DOMXPath($domDoc);
+        $domXpath = new \DOMXPath($doc = new \DOMDocument('1.0', 'UTF-8'));
 
-        return @$domXpath->evaluate($xpath, $domDoc) !== false;
+        return @$domXpath->evaluate($xpath, $doc) !== false;
     }
 }
