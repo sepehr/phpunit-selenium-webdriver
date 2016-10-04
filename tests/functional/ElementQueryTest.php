@@ -6,92 +6,11 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 
 /**
- * If not running in a separate process, will conflict with unit tests.
- *
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
-class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
+class ElementQueryTest extends FunctionalSeleniumTestCase
 {
-
-    // ----------------------------------------------------------------------------
-    // Page URL
-    // ----------------------------------------------------------------------------
-
-    /** @test */
-    public function visitsRemoteUrls()
-    {
-        $url = 'https://github.com/sepehr';
-
-        $this->visit($url);
-
-        $this->assertSame($url, $this->webDriverUrl());
-    }
-
-    /** @test */
-    public function visitsLocalUrls()
-    {
-        $url = $this->getTestFileUrl('test.html');
-
-        $this->visit($url);
-
-        $this->assertSame($url, $this->webDriverUrl());
-    }
-
-    /** @test */
-    public function performsAssertionsAgainstPageUrl()
-    {
-        $url = $this->getTestFileUrl('test.html');
-
-        $this->visit($url)
-            ->seePageIs($url)
-            ->dontSeePageIs('https://github.com/sepehr');
-    }
-
-    // ----------------------------------------------------------------------------
-    // Page Source
-    // ----------------------------------------------------------------------------
-
-    /** @test */
-    public function seesPageSource()
-    {
-        $this->assertNotEmpty($this->visitTestFile()->pageSource());
-    }
-
-    /** @test */
-    public function performsAssertionsAgainstPageSource()
-    {
-        $this->visitTestFile()
-            ->see('Webdriver-backed Selenium testcase')
-            ->dontSee('an area of the mind which could be called unsane, beyond sanity and yet not insane.');
-    }
-
-    // ----------------------------------------------------------------------------
-    // Page Title
-    // ----------------------------------------------------------------------------
-
-    /** @test */
-    public function seesPageTitle()
-    {
-        $this->assertSame(
-            $this->testFileTitle,
-            $this->visitTestFile()->pageTitle()
-        );
-    }
-
-    /** @test */
-    public function performsAssertionsAgainstPageTitle()
-    {
-        $this->visitTestFile()
-            ->seeTitle($this->testFileTitle)
-            ->seeTitleContains(substr($this->testFileTitle, 0, 5))
-            ->dontSeeTitle('There is fear to face...')
-            ->dontSeeTitleContains('...but happiness');
-    }
-
-    // ----------------------------------------------------------------------------
-    // Finds Elements
-    // ----------------------------------------------------------------------------
 
     /** @test */
     public function findsElementByName()
@@ -347,7 +266,7 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findOneByReturnsOnlyOneElementEvenThoughThereAreMultipleMatchedOnes()
+    public function findOneByReturnsOnlyOneElementEvenThoughThereAreMultipleMatches()
     {
         $by = $this->createWebDriverByInstance('cssSelector', '.findMeByClass');
         $el = $this->visitTestFile()->findOneBy($by);
@@ -364,14 +283,6 @@ class SeleniumTestCaseTest extends FunctionalSeleniumTestCase
             $this->createWebDriverByInstance('cssSelector', 'lead')
         );
     }
-
-    // ----------------------------------------------------------------------------
-    // Interactions
-    // ----------------------------------------------------------------------------
-
-    // ----------------------------------------------------------------------------
-    // Data Providers
-    // ----------------------------------------------------------------------------
 
     /**
      * Data provider for attribute/value/tag pairs.
