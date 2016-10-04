@@ -14,16 +14,23 @@ use Sepehr\PHPUnitSelenium\Util\Locator;
 class ElementInteractionTest extends UnitSeleniumTestCase
 {
 
-    /** @test */
-    public function typesIntoAnElementIdentifiedByALocator()
+    /**
+     * @test
+     *
+     * Tests element interaction methods, e.g. type(), click(), hit(), etc.
+     *
+     * @param string $api API method name to call.
+     * @param array $apiArgs Arguments array to pass to the API method.
+     * @param string $action Method name to actually call against the element.
+     *
+     * @dataProvider elementActionProvider
+     */
+    public function dispatchesActionsOnElementsFoundByALocator($api, $apiArgs, $action)
     {
-        $locator = 'someLocator';
-        $typed   = 'Life is a magnificent illusion';
-
         $elementMock = Mockery::mock('overload:' . RemoteWebElement::class)
-            ->shouldReceive('sendKeys')
+            ->shouldReceive($action)
             ->once()
-            ->with($typed)
+            ->with($apiArgs[0])
             ->andReturn(Mockery::self())
             ->mock();
 
@@ -40,16 +47,30 @@ class ElementInteractionTest extends UnitSeleniumTestCase
         Mockery::mock('alias:' . WebDriverBy::class)
             ->shouldReceive('xpath')
             ->once()
-            ->with($locator)
+            ->with($apiArgs[1])
             ->andReturn(Mockery::self())
             ->mock();
 
         Mockery::mock('alias:' . Locator::class)
             ->shouldReceive('isXpath')
             ->once()
-            ->with($locator)
+            ->with($apiArgs[1])
             ->andReturn(true);
 
-        $this->type($typed, $locator);
+        $this->$api(...$apiArgs);
     }
+
+    /**
+     * Data provider for element actions.
+     *
+     * @return array
+     */
+    public static function elementActionProvider()
+    {
+        return [
+            // Pattern: $api, $apiArgs, $action
+            ['type', ['Life is a magnificent illusion', 'someLocator'], 'sendKeys']
+        ];
+    }
+
 }
