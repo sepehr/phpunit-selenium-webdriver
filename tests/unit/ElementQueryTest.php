@@ -6,6 +6,7 @@ use Mockery;
 use Facebook\WebDriver\WebDriverBy;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 use Facebook\WebDriver\Exception\NoSuchElementException;
+use Sepehr\PHPUnitSelenium\Util\Locator;
 
 /**
  * @runTestsInSeparateProcesses
@@ -99,6 +100,63 @@ class ElementQueryTest extends UnitSeleniumTestCase
         $this->findOneBy(Mockery::mock(WebDriverBy::class));
     }
 
+    /** @test */
+    public function findsElementsByXpathLocator()
+    {
+        Mockery::mock('alias:' . Locator::class)
+            ->shouldReceive('isXpath')
+            ->once()
+            ->with($locator = 'someLocator')
+            ->andReturn(true);
+
+        Mockery::mock('alias:' . WebDriverBy::class)
+            ->shouldReceive('xpath')
+            ->once()
+            ->with($locator)
+            ->andReturn(Mockery::self())
+            ->mock();
+
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                ->shouldReceive('findElements')
+                ->once()
+                ->with(WebDriverBy::class)
+                ->andReturn($expected = ['el1', 'el2'])
+                ->getMock()
+        );
+
+        $this->assertSame($expected, $this->find($locator));
+    }
+
+    /** @test */
+    public function throwsAnExceptionIfNoElementIsFoundByLocator()
+    {
+        Mockery::mock('alias:' . Locator::class)
+            ->shouldReceive('isXpath')
+            ->once()
+            ->with($locator = 'someLocator')
+            ->andReturn(false);
+
+        Mockery::mock('alias:' . WebDriverBy::class)
+            ->shouldReceive('xpath', 'cssSelector', 'name', 'id')
+            ->withAnyArgs()
+            ->andReturn(Mockery::self())
+            ->mock();
+
+        $this->injectMockedWebDriver(
+            $this->webDriverMock
+                ->shouldReceive('findElements')
+                ->times(5)
+                ->with(WebDriverBy::class)
+                ->andReturn([])
+                ->getMock()
+        );
+
+        $this->expectException(NoSuchElement::class);
+
+        $this->find($locator);
+    }
+
     /**
      * @test
      *
@@ -111,7 +169,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
      *
      * @dataProvider elementQueryMethodProvider
      */
-    public function findsElementsWithDifferentMachanism($api, array $args, $mechanism, $alt = null)
+    public function findsElementsWithDifferentMachanisms($api, array $args, $mechanism, $alt = null)
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
@@ -144,7 +202,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
      *
      * @dataProvider elementQueryMethodWithFallbackProvider
      */
-    public function findsElementsWithDifferentFallbackMachanism($api, array $args, array $mechanism, array $alt)
+    public function findsElementsWithDifferentFallbackMachanisms($api, array $args, array $mechanism, array $alt)
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
