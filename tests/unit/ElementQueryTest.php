@@ -169,7 +169,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
      *
      * @dataProvider elementQueryMethodProvider
      */
-    public function findsElementsWithDifferentMachanisms($api, array $args, $mechanism, $alt = null)
+    public function findsElementsByDifferentMachanisms($api, array $args, $mechanism, $alt = null)
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
@@ -202,7 +202,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
      *
      * @dataProvider elementQueryMethodWithFallbackProvider
      */
-    public function findsElementsWithDifferentFallbackMachanisms($api, array $args, array $mechanism, array $alt)
+    public function findsElementsByDifferentFallbackMachanisms($api, array $args, array $mechanism, array $alt)
     {
         $this->injectMockedWebDriver(
             $this->webDriverMock
