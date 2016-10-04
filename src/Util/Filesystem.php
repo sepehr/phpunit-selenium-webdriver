@@ -13,9 +13,9 @@ class Filesystem
      *
      * @return bool
      */
-    public function put($filepath, $data)
+    public static function put($filepath, $data)
     {
-        $this->mkdir(dirname($filepath));
+        self::mkdir(dirname($filepath));
 
         return file_put_contents($filepath, $data) === false ? false : true;
     }
@@ -28,7 +28,7 @@ class Filesystem
      *
      * @return void
      */
-    public function mkdir($dir, $permission = 0755)
+    public static function mkdir($dir, $permission = 0755)
     {
         is_dir($dir) or mkdir($dir, $permission, true);
     }
