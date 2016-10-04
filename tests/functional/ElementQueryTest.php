@@ -12,127 +12,35 @@ use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 class ElementQueryTest extends FunctionalSeleniumTestCase
 {
 
-    /** @test */
-    public function findsElementByName()
-    {
-        $element = $this->visitTestFile()->findByName($name = 'findMeByName');
-
-        $this->assertSame($name, $element->getAttribute('name'));
-    }
-
-    /** @test */
-    public function findsElementsByClass()
-    {
-        $elements = $this->visitTestFile()->findByClass($class = 'findMeByClass');
-
-        foreach ($elements as $element) {
-            $this->assertSame($class, $element->getAttribute('class'));
-        }
-    }
-
-    /** @test */
-    public function findsElementById()
-    {
-        $element = $this->visitTestFile()->findById($id = 'findMeById');
-
-        $this->assertSame($id, $element->getAttribute('id'));
-    }
-
-    /** @test */
-    public function findsElementByCssSelector()
-    {
-        $element = $this->visitTestFile()->findBySelector('#main > section p.lead');
-
-        $this->assertSame(
-            'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
-            $element->getText()
-        );
-    }
-
     /**
      * @test
      *
-     * @param string $attribute
-     * @param string $value
-     * @param string $tagName
+     * Tests all find*() API methods.
      *
-     * @dataProvider attributeValueTagProvider
+     * The test for all of these methods follow the same logic, so we implemented it
+     * a lil bit more general, so we can utilize a dataProvider to test all these
+     * methods. If we were going to write each test method separately, we'll end
+     * up having around 30 methods with mostly same implementation. Not a great
+     * idea, right? Lazies of the world unite!
+     *
+     * @param string $finder Name of finder method, e.g. findByName.
+     * @param array $finderArgs Arguments array to pass to finder method.
+     * @param string $assert PHPUnit assertion method name, e.g. assertSame.
+     * @param string $truth Source of truth to check for.
+     * @param string $action Method name to call on the found elements.
+     * @param array $actionArgs Arguments array to pass to element action.
+     *
+     * @dataProvider findMechanismProvider
      */
-    public function findsElementByAttribute($attribute, $value, $tagName)
+    public function findsElementsByDifferentMachanisms($finder, $finderArgs, $assert, $truth, $action, $actionArgs)
     {
-        $element = $this->visitTestFile()->findByAttribute($attribute, $value, $tagName);
+        $elements = $this->visitTestFile()->$finder(...$finderArgs);
 
-        $this->assertSame($value, $element->getAttribute($attribute));
-    }
-
-    /**
-     * @test
-     *
-     * @param string $value
-     * @param string $tagName
-     *
-     * @dataProvider valueTagProvider
-     */
-    public function findsElementByValue($value, $tagName)
-    {
-        $element = $this->visitTestFile()->findByValue($value, $tagName);
-
-        $this->assertSame($value, $element->getAttribute('value'));
-    }
-
-    /** @test */
-    public function findsElementsByPartialValue()
-    {
-        $elements = $this->visitTestFile()->findByPartialValue($partialValue = 'ByValue');
+        is_array($elements) or $elements = [$elements];
 
         foreach ($elements as $element) {
-            $this->assertContains($partialValue, $element->getAttribute('value'));
+            $this->$assert($truth, $element->$action(...$actionArgs));
         }
-    }
-
-    /**
-     * @test
-     *
-     * @param string $text
-     * @param string $tagName
-     *
-     * @dataProvider textTagProvider
-     */
-    public function findsElementByText($text, $tagName)
-    {
-        $element = $this->visitTestFile()->findByText($text, $tagName);
-
-        $this->assertSame($text, $element->getText());
-    }
-
-    /** @test */
-    public function findsElementsByPartialText()
-    {
-        $elements = $this->visitTestFile()->findByPartialText($partialText = 'ByText');
-
-        foreach ($elements as $element) {
-            $this->assertContains($partialText, $element->getText());
-        }
-    }
-
-    /** @test */
-    public function findsElementByTextOrValue()
-    {
-        $this->visitTestFile();
-
-        $criteria = 'findInputByValue';
-
-        $this->assertSame(
-            $criteria,
-            $this->findByTextOrValue($criteria)->getAttribute('value')
-        );
-
-        $criteria = 'findButtonByText';
-
-        $this->assertSame(
-            $criteria,
-            $this->findByTextOrValue($criteria)->getText()
-        );
     }
 
     /** @test */
@@ -145,96 +53,6 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
 
             $this->assertContains($criteria, $test);
         }
-    }
-
-    /** @test */
-    public function findsElementByNameOrId()
-    {
-        $this->visitTestFile();
-
-        $criteria = 'findMeById';
-
-        $this->assertSame($criteria, $this->findByNameOrId($criteria)->getAttribute('id'));
-
-        $criteria = 'findMeByName';
-
-        $this->assertSame($criteria, $this->findByNameOrId($criteria)->getAttribute('name'));
-    }
-
-    /** @test */
-    public function findsLinkByItsText()
-    {
-        $element = $this->visitTestFile()->findByLinkText($text = 'View on github');
-
-        $this->assertSame($text, $element->getText());
-    }
-
-    /** @test */
-    public function findsLinkByItsPartialText()
-    {
-        $element = $this->visitTestFile()->findByLinkPartialText($text = 'leniumHQ');
-
-        $this->assertContains($text, $element->getText());
-    }
-
-    /** @test */
-    public function findsLinkByItsHref()
-    {
-        $element = $this->visitTestFile()->findByLinkHref($href = 'http://www.seleniumhq.org/');
-
-        $this->assertEquals($href, $element->getAttribute('href'));
-    }
-
-    /** @test */
-    public function findsLinkByItsPartialHref()
-    {
-        $element = $this->visitTestFile()->findByLinkPartialHref($href = 'mhq.org');
-
-        $this->assertContains($href, $element->getAttribute('href'));
-    }
-
-    /** @test */
-    public function findsElementByXpath()
-    {
-        $element = $this->visitTestFile()->findByXpath('//*[@id="main"]/section[1]/p');
-
-        $this->assertSame(
-            'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
-            $element->getText()
-        );
-    }
-
-    /** @test */
-    public function findsElementsByTagName()
-    {
-        $elements = $this->visitTestFile()->findByTag($tagName = 'a');
-
-        foreach ($elements as $element) {
-            $this->assertSame($tagName, $element->getTagName());
-        }
-    }
-
-    /** @test */
-    public function findsElementByTabIndex()
-    {
-        $element = $this->visitTestFile()->findByTabIndex($tabindex = 7);
-
-        $this->assertEquals($tabindex, $element->getAttribute('tabindex'));
-    }
-
-    /**
-     * @test
-     *
-     * @param string $locator
-     * @param string $text
-     *
-     * @dataProvider locatorTextProvider
-     */
-    public function findsElementsByLocator($locator, $text)
-    {
-        $element = $this->visitTestFile()->find($locator);
-
-        $this->assertSame($text, $element->getText());
     }
 
     /** @test */
@@ -280,68 +98,330 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
         $this->expectException(NoSuchElement::class);
 
         $this->visitTestFile()->findOneBy(
-            $this->createWebDriverByInstance('cssSelector', 'lead')
+            $this->createWebDriverByInstance('cssSelector', 'someBadSelector')
         );
     }
 
     /**
-     * Data provider for attribute/value/tag pairs.
+     * Data provider for find mechanisms.
      *
      * @return array
      */
-    public static function attributeValueTagProvider()
+    public static function findMechanismProvider()
     {
         return [
-            ['data-dummy', 'findMeByAttribute', 'p'],
-            ['href', 'https://github.com/sepehr/phpunit-selenium-webdriver', 'a'],
-            ['placeholder', 'findMeByMyPlaceholder', '*'],
-        ];
-    }
+            // Pattern:
+            // $finder, $finderArgs[], $assert, $truth, $action, $actionArgs[]
 
-    /**
-     * Data provider for value/tag pairs.
-     *
-     * @return array
-     */
-    public static function valueTagProvider()
-    {
-        return [
-            ['findInputByValue', 'input'],
-            ['findOptionByValue-1', 'option'],
-            ['findOptionByValue-2', '*'],
-        ];
-    }
+            // Tests findByName():
+            [
+                'findByName',
+                ['findMeByName'],
+                'assertSame',
+                'findMeByName',
+                'getAttribute',
+                ['name']
+            ],
 
-    /**
-     * Data provider for text/tag pairs.
-     *
-     * @return array
-     */
-    public static function textTagProvider()
-    {
-        return [
-            ['findTextareaByText', 'textarea'],
-            ['findTextareaByText', '*'],
-            ['findButtonByText', 'button'],
-            ['findButtonByText', '*'],
-            ['This span can be found by its text, too.', '*'],
-        ];
-    }
+            // Tests findByClass():
+            [
+                'findByClass',
+                ['findMeByClass'],
+                'assertSame',
+                'findMeByClass',
+                'getAttribute',
+                ['class']
+            ],
 
-    /**
-     * Data provider for locator/text pairs.
-     *
-     * @return array
-     */
-    public static function locatorTextProvider()
-    {
-        return [
-            ['findMeByName', ''],
-            ['findInputByValue', ''],
-            ['findButtonByText', 'findButtonByText'],
-            ['findMeById', 'This element can be found by its ID: findMeById'],
-            ['.findMeByClass:first-child', 'This element can be found by this class: findMeByClass'],
-            ['//*[@id="main"]/section[1]/p', 'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.'],
+            // Tests findById():
+            [
+                'findById',
+                ['findMeById'],
+                'assertSame',
+                'findMeById',
+                'getAttribute',
+                ['id']
+            ],
+
+            // Tests findBySelector():
+            [
+                'findBySelector',
+                ['#main > section p.lead'],
+                'assertSame',
+                'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
+                'getText',
+                []
+            ],
+
+            // Tests findByAttribute():
+            [
+                'findByAttribute',
+                ['data-dummy', 'findMeByAttribute', 'p'],
+                'assertSame',
+                'findMeByAttribute',
+                'getAttribute',
+                ['data-dummy']
+            ],
+            [
+                'findByAttribute',
+                ['href', 'https://github.com/sepehr/phpunit-selenium-webdriver', 'a'],
+                'assertSame',
+                'https://github.com/sepehr/phpunit-selenium-webdriver',
+                'getAttribute',
+                ['href']
+            ],
+            [
+                'findByAttribute',
+                ['placeholder', 'findMeByMyPlaceholder', '*'],
+                'assertSame',
+                'findMeByMyPlaceholder',
+                'getAttribute',
+                ['placeholder']
+            ],
+
+            // Tests findByValue():
+            [
+                'findByValue',
+                ['findInputByValue', 'input'],
+                'assertSame',
+                'findInputByValue',
+                'getAttribute',
+                ['value']
+            ],
+            [
+                'findByValue',
+                ['findOptionByValue-1', 'option'],
+                'assertSame',
+                'findOptionByValue-1',
+                'getAttribute',
+                ['value']
+            ],
+            [
+                'findByValue',
+                ['findOptionByValue-2', '*'],
+                'assertSame',
+                'findOptionByValue-2',
+                'getAttribute',
+                ['value']
+            ],
+
+            // Tests findByPartialValue():
+            [
+                'findByPartialValue',
+                ['ByValue'],
+                'assertContains',
+                'ByValue',
+                'getAttribute',
+                ['value']
+            ],
+
+            // Tests findByText():
+            [
+                'findByText',
+                ['findTextareaByText', 'textarea'],
+                'assertSame',
+                'findTextareaByText',
+                'getText',
+                []
+            ],
+            [
+                'findByText',
+                ['findTextareaByText', '*'],
+                'assertSame',
+                'findTextareaByText',
+                'getText',
+                []
+            ],
+            [
+                'findByText',
+                ['findButtonByText', 'button'],
+                'assertSame',
+                'findButtonByText',
+                'getText',
+                []
+            ],
+            [
+                'findByText',
+                ['findButtonByText', '*'],
+                'assertSame',
+                'findButtonByText',
+                'getText',
+                []
+            ],
+            [
+                'findByText',
+                ['This span can be found by its text, too.', '*'],
+                'assertSame',
+                'This span can be found by its text, too.',
+                'getText',
+                []
+            ],
+
+            // Tests findByPartialText():
+            [
+                'findByPartialText',
+                ['ByText'],
+                'assertContains',
+                'ByText',
+                'getText',
+                []
+            ],
+
+            // Tests findByLinkText():
+            [
+                'findByLinkText',
+                ['View on github'],
+                'assertSame',
+                'View on github',
+                'getText',
+                []
+            ],
+
+            // Tests findByLinkPartialText():
+            [
+                'findByLinkPartialText',
+                ['leniumHQ'],
+                'assertContains',
+                'leniumHQ',
+                'getText',
+                []
+            ],
+
+            // Tests findByLinkHref():
+            [
+                'findByLinkHref',
+                ['http://www.seleniumhq.org/'],
+                'assertSame',
+                'http://www.seleniumhq.org/',
+                'getAttribute',
+                ['href']
+            ],
+
+            // Tests findByLinkPartialHref():
+            [
+                'findByLinkPartialHref',
+                ['mhq.org'],
+                'assertContains',
+                'mhq.org',
+                'getAttribute',
+                ['href']
+            ],
+
+            // Tests findByXpath():
+            [
+                'findByXpath',
+                ['//*[@id="main"]/section[1]/p'],
+                'assertSame',
+                'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
+                'getText',
+                []
+            ],
+
+            // Tests findByXpath():
+            [
+                'findByTag',
+                ['a'],
+                'assertSame',
+                'a',
+                'getTagName',
+                []
+            ],
+
+            // Tests findByXpath():
+            [
+                'findByTabIndex',
+                [7],
+                'assertEquals',
+                7,
+                'getAttribute',
+                ['tabindex']
+            ],
+
+            // Tests find():
+            [
+                'find',
+                ['findMeByName'],
+                'assertSame',
+                '',
+                'getText',
+                []
+            ],
+            [
+                'find',
+                ['findInputByValue'],
+                'assertSame',
+                '',
+                'getText',
+                []
+            ],
+            [
+                'find',
+                ['findButtonByText'],
+                'assertSame',
+                'findButtonByText',
+                'getText',
+                []
+            ],
+            [
+                'find',
+                ['findMeById'],
+                'assertSame',
+                'This element can be found by its ID: findMeById',
+                'getText',
+                []
+            ],
+            [
+                'find',
+                ['.findMeByClass:first-child'],
+                'assertSame',
+                'This element can be found by this class: findMeByClass',
+                'getText',
+                []
+            ],
+            [
+                'find',
+                ['//*[@id="main"]/section[1]/p'],
+                'assertSame',
+                'Webdriver-backed Selenium testcase for PHPUnit with fluent testing API.',
+                'getText',
+                []
+            ],
+
+            // Tests findByTextOrValue():
+            [
+                'findByTextOrValue',
+                ['findInputByValue'],
+                'assertSame',
+                'findInputByValue',
+                'getAttribute',
+                ['value']
+            ],
+            [
+                'findByTextOrValue',
+                ['findButtonByText'],
+                'assertSame',
+                'findButtonByText',
+                'getText',
+                []
+            ],
+
+            // Tests findByNameOrId():
+            [
+                'findByNameOrId',
+                ['findMeById'],
+                'assertSame',
+                'findMeById',
+                'getAttribute',
+                ['id']
+            ],
+            [
+                'findByNameOrId',
+                ['findMeByName'],
+                'assertSame',
+                'findMeByName',
+                'getAttribute',
+                ['name']
+            ],
         ];
     }
 }
