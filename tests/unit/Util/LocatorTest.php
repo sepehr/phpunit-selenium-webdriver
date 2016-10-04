@@ -8,6 +8,20 @@ class LocatorTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
+     * Locator instance.
+     *
+     * @var Locator
+     */
+    protected $locator;
+
+    public function setUp()
+    {
+        $this->locator = new Locator;
+
+        parent::setUp();
+    }
+
+    /**
      * @test
      *
      * @param string $valid Valid CSS selector.
@@ -18,12 +32,12 @@ class LocatorTest extends \PHPUnit_Framework_TestCase
     public function validatesIfLocatorIsACssSelectorOrNot($valid, $invalid)
     {
         $this->assertTrue(
-            Locator::isSelector($valid),
+            $this->locator->isSelector($valid),
             "Failed asserting that $valid is a valid CSS selector."
         );
 
         $this->assertFalse(
-            Locator::isSelector($invalid),
+            $this->locator->isSelector($invalid),
             "Failed asserting that $invalid is an INVALID CSS selector."
         );
     }
@@ -39,12 +53,12 @@ class LocatorTest extends \PHPUnit_Framework_TestCase
     public function validatesIfLocatorIsXpathOrNot($invalid, $valid)
     {
         $this->assertTrue(
-            Locator::isXpath($valid),
+            $this->locator->isXpath($valid),
             "Failed asserting that $valid is a valid XPath."
         );
 
         $this->assertFalse(
-            Locator::isXpath($invalid),
+            $this->locator->isXpath($invalid),
             "Failed asserting that $invalid is an INVALID XPath."
         );
     }
