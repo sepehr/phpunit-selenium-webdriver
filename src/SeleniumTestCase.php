@@ -615,7 +615,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     // ----------------------------------------------------------------------------
 
     /**
-     * Tries to find elements by examining CSS selector, name, value or text.
+     * Tries to find elements by examining XPath, CSS selector, name, ID, value or text.
      *
      * Examination order:
      * - XPath
