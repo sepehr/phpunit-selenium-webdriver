@@ -6,6 +6,7 @@ use Mockery;
 use Mockery\MockInterface;
 use phpmock\mockery\PHPMockery;
 use Mockery\CompositeExpectation;
+use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\SeleniumTestCase;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
@@ -126,6 +127,18 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     protected function injectDesiredCapabilities($mock = DesiredCapabilities::class)
     {
         return $this->injectDependency($mock, 'setDesiredCapabilities');
+    }
+
+    /**
+     * Injects a mocked Filesystem into the SeleniumTestCase.
+     *
+     * @param MockInterface|CompositeExpectation|string $mock
+     *
+     * @return Filesystem
+     */
+    protected function injectFilesystem($mock = Filesystem::class)
+    {
+        return $this->injectDependency($mock, 'setFilesystem');
     }
 
     /**
