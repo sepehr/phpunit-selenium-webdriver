@@ -21,7 +21,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
 {
 
     /** @test */
-    public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughShortcutMethods()
+    public function createsAnInstanceForAValidBrowserThroughShortcutMethods()
     {
         $this->mock('alias:' . DesiredCapabilities::class)
             // e.g. DesiredCapabilities::firefox()
@@ -37,7 +37,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughInstantiating()
+    public function createsAnInstanceForAValidBrowserThroughInstantiating()
     {
         $this->setBrowser(WebDriverBrowserType::KONQUEROR);
 
