@@ -7,6 +7,11 @@ use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**
+ * Here we're testing the creation of a hard dependency. Even though we
+ * could easily inject a mocked copy of the dependency class into the SUT,
+ * we went the hard way and used aliased/overloaded mocks in few test methods,
+ * to actually test the creation of dependency class, when no instance is injected.
+ *
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
@@ -14,23 +19,25 @@ class FilesystemTest extends UnitSeleniumTestCase
 {
 
     /** @test */
-    public function createsAFilesystemInstance()
+    public function createsAnInstance()
     {
-        Mockery::mock('overload:' . Filesystem::class);
+        $this->mock('alias:' . Filesystem::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn(Mockery::self())
+            ->mock();
 
-        $this->assertInstanceOf(
-            Filesystem::class,
-            $this->createFilesystemInstance()
-        );
+        $this->assertInstanceOf(Filesystem::class, $this->filesystem());
     }
 
     /** @test */
-    public function setupsAFilesystemInstance()
+    public function doesNotCreateANewInstanceIfAlreadyExists()
     {
-        Mockery::mock('overload:' . Filesystem::class);
+        $this->inject(
+            $this->mock(Filesystem::class)
+                ->shouldNotReceive('create')
+        );
 
-        $this->setupFilesystem();
-
-        $this->assertInstanceOf(Filesystem::class, $this->filesystem);
+        $this->assertInstanceOf(Filesystem::class, $this->filesystem());
     }
 }
