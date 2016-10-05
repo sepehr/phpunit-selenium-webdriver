@@ -63,6 +63,14 @@ class LocatorTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    /** @test */
+    public function checksIfItsAValidLocator()
+    {
+        $this->assertTrue($this->locator->isLocator('Any string can be a locator...'));
+
+        $this->assertFalse($this->locator->isLocator([]));
+    }
+
     /**
      * Selector/Xpath provider.
      *

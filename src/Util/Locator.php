@@ -35,6 +35,20 @@ class Locator
     {
         $domXpath = new \DOMXPath($doc = new \DOMDocument('1.0', 'UTF-8'));
 
+        // Conflicts with HHVM, see:
+        // https://github.com/facebook/hhvm/issues/5790
         return @$domXpath->evaluate($xpath, $doc) !== false;
+    }
+
+    /**
+     * Checks whether it's a element locator or not.
+     *
+     * @param mixed $wtf Thing to check.
+     *
+     * @return bool
+     */
+    public static function isLocator($wtf)
+    {
+        return is_string($wtf);
     }
 }
