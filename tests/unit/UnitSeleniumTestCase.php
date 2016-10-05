@@ -113,7 +113,7 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
      */
     protected function injectWebDriver($mock = RemoteWebDriver::class)
     {
-        return $this->injectDependency($mock);
+        return $this->injectDependency($mock, 'setWebDriver');
     }
 
     /**
@@ -125,7 +125,7 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
      */
     protected function injectDesiredCapabilities($mock = DesiredCapabilities::class)
     {
-        return $this->injectDependency($mock);
+        return $this->injectDependency($mock, 'setDesiredCapabilities');
     }
 
     /**
