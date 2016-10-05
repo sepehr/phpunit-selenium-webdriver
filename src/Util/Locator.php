@@ -38,7 +38,7 @@ class Locator
         // Conflicts with HHVM, see:
         // https://github.com/facebook/hhvm/issues/5790
         libxml_use_internal_errors(true);
-        
+
         return @$domXpath->evaluate($xpath, $doc) !== false;
     }
 
