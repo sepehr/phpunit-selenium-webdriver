@@ -5,6 +5,7 @@ namespace Sepehr\PHPUnitSelenium\Tests\Unit\Dependency;
 use Mockery;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\WebDriverBrowserType;
+use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**
@@ -17,7 +18,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     /** @test */
     public function createsADesiredCapabilitiesInstanceForAValidBrowserThroughShortcutMethods()
     {
-        Mockery::mock('alias:' . DesiredCapabilities::class)
+        $this->mock('alias:' . DesiredCapabilities::class)
             // e.g. DesiredCapabilities::firefox()
             ->shouldReceive($browser = 'firefox')
             ->once()
@@ -27,10 +28,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
 
         $this->setBrowser($browser);
 
-        $this->assertInstanceOf(
-            DesiredCapabilities::class,
-            $this->createDesiredCapabilitiesInstance()
-        );
+        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
     }
 
     /** @test */
@@ -39,11 +37,40 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
         $this->setBrowser(WebDriverBrowserType::KONQUEROR);
 
         // e.g. new DesiredCapabilities([...])
-        Mockery::mock('overload:' . DesiredCapabilities::class);
+        $this->mock('overload:' . DesiredCapabilities::class);
 
-        $this->assertInstanceOf(
-            DesiredCapabilities::class,
-            $this->createDesiredCapabilitiesInstance()
+        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
+    }
+
+    /** @test */
+    public function throwsAnExceptionIfCreatingAnInstanceWithAnInvalidBrowser()
+    {
+        $this->browser = 'invalidBrowser';
+
+        $this->expectException(InvalidArgument::class);
+
+        $this->desiredCapabilities();
+    }
+
+    /** @test */
+    public function throwsAnExceptionIfCreatingAnInstanceWithAnInvalidPlatform()
+    {
+        $this->platform = 'invalidPlatform';
+        $this->setBrowser(WebDriverBrowserType::KONQUEROR);
+
+        $this->expectException(InvalidArgument::class);
+
+        $this->desiredCapabilities();
+    }
+
+    /** @test */
+    public function doesNotCreateANewInstanceIfAlreadyExists()
+    {
+        $this->inject(
+            $this->mock(DesiredCapabilities::class)
+                ->shouldNotReceive($this->browser)
         );
+
+        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
     }
 }
