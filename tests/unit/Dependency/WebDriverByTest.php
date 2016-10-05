@@ -4,7 +4,6 @@ namespace Sepehr\PHPUnitSelenium\Tests\Unit\Dependency;
 
 use Mockery;
 use Facebook\WebDriver\WebDriverBy;
-use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**
@@ -26,21 +25,7 @@ class WebDriverByTest extends UnitSeleniumTestCase
 
         $this->assertInstanceOf(
             WebDriverBy::class,
-            $this->createWebDriverByInstance($mechanism, $value)
+            $this->webDriverBy->$mechanism($value)
         );
-    }
-
-    /** @test */
-    public function throwsAnExceptionWhenCreatingAnInstanceOfWebDriverByWithInvalidMechanism()
-    {
-        Mockery::mock('alias:' . WebDriverBy::class)
-            ->shouldReceive($mechanism = 'invalidMechanism')
-            ->once()
-            ->with($value = 'someValue')
-            ->andThrow(\Exception::class);
-
-        $this->expectException(InvalidArgument::class);
-
-        $this->createWebDriverByInstance($mechanism, $value);
     }
 }

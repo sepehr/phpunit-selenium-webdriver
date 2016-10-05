@@ -59,7 +59,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findByReturnsAnEmptyArrayForBadLocator()
     {
-        $by = $this->createWebDriverByInstance('name', 'badLocator,VeryBadLocator!');
+        $by = $this->webDriverBy()->name('badLocator,VeryBadLocator!');
 
         $this->assertEmpty(
             $this->visitTestFile()->findBy($by)
@@ -69,7 +69,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findByReturnsAnElementIfOnlyOneElementIsFound()
     {
-        $by = $this->createWebDriverByInstance('id', 'main');
+        $by = $this->webDriverBy()->id('main');
         $el = $this->visitTestFile()->findBy($by);
 
         $this->assertInstanceOf(RemoteWebElement::class, $el);
@@ -78,7 +78,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findByReturnsAnArrayOfElementsIfMultipleElementsAreFound()
     {
-        $by  = $this->createWebDriverByInstance('cssSelector', '.findMeByClass');
+        $by  = $this->webDriverBy()->cssSelector('.findMeByClass');
         $els = $this->visitTestFile()->findBy($by);
 
         $this->assertContainsOnlyInstancesOf(RemoteWebElement::class, $els);
@@ -87,7 +87,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findOneByReturnsOnlyOneElementEvenThoughThereAreMultipleMatches()
     {
-        $by = $this->createWebDriverByInstance('cssSelector', '.findMeByClass');
+        $by = $this->webDriverBy()->cssSelector('.findMeByClass');
         $el = $this->visitTestFile()->findOneBy($by);
 
         $this->assertInstanceOf(RemoteWebElement::class, $el);
@@ -99,7 +99,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
         $this->expectException(NoSuchElement::class);
 
         $this->visitTestFile()->findOneBy(
-            $this->createWebDriverByInstance('cssSelector', 'someBadSelector')
+            $this->webDriverBy()->cssSelector('someBadSelector')
         );
     }
 

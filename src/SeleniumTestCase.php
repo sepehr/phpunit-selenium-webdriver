@@ -2,7 +2,6 @@
 
 namespace Sepehr\PHPUnitSelenium;
 
-use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
 use Facebook\WebDriver\WebDriverPlatform;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -15,6 +14,7 @@ use Facebook\WebDriver\Exception\NoSuchElementException;
 
 use Sepehr\PHPUnitSelenium\Util\Locator;
 use Sepehr\PHPUnitSelenium\Util\Filesystem;
+use Sepehr\PHPUnitSelenium\WebDriver\WebDriverBy;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
@@ -50,6 +50,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected $webDriver;
 
     /**
+     * Instance of WebDriverBy.
+     *
+     * @var WebDriverBy
+     */
+    protected $webDriverBy;
+
+    /**
      * Instance of DesiredCapabilities.
      *
      * @var DesiredCapabilities
@@ -62,6 +69,13 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @var Filesystem
      */
     protected $filesystem;
+
+    /**
+     * Locator instance.
+     *
+     * @var Locator
+     */
+    protected $locator;
 
     /**
      * Current URL.
@@ -149,8 +163,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         if ($force || ! $this->webDriverLoaded()) {
             try {
-                $this->setupDesiredCapabilities();
-                $this->setupWebDriver($force);
+                $this->webDriver($force);
             } catch (WebDriverCurlException $e) {
                 throw new SeleniumNotRunning($e->getMessage());
             }
@@ -186,6 +199,39 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Manages access to WebDriver instance.
+     *
+     * @param bool $force
+     *
+     * @return RemoteWebDriver
+     */
+    protected function webDriver($force = false)
+    {
+        if ($force || ! $this->webDriver instanceof RemoteWebDriver) {
+            $this->setWebDriver($this->webDriverInstance());
+        }
+
+        return $this->webDriver;
+    }
+
+    /**
+     * RemoteWebDriver factory.
+     *
+     * @return RemoteWebDriver
+     */
+    protected function webDriverInstance()
+    {
+        return RemoteWebDriver::create(
+            $this->host,
+            $this->desiredCapabilities(),
+            $this->connectionTimeout,
+            $this->requestTimeout,
+            $this->httpProxy,
+            $this->httpProxyPort
+        );
+    }
+
+    /**
      * Sets the internal webdriver instance.
      *
      * @param RemoteWebDriver $webDriver
@@ -200,34 +246,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Creates and sets an instance of RemoteWebDriver only if necessary.
-     *
-     * @param bool $force
-     *
-     * @return $this
-     */
-    protected function setupWebDriver($force = false)
-    {
-        if ($force || ! $this->webDriver instanceof RemoteWebDriver) {
-            $this->setWebDriver(
-                $this->createWebDriverInstance()
-            );
-        }
-
-        return $this;
-    }
-
-    /**
-     * Returns webdriver instance.
-     *
-     * @return RemoteWebDriver
-     */
-    protected function webDriver()
-    {
-        return $this->webDriver;
-    }
-
-    /**
      * Check if webdriver is loaded.
      *
      * @return bool
@@ -238,37 +256,85 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * RemoteWebDriver factory.
-     *
-     * @return RemoteWebDriver
-     */
-    protected function createWebDriverInstance()
-    {
-        return RemoteWebDriver::create(
-            $this->host,
-            $this->desiredCapabilities(),
-            $this->connectionTimeout,
-            $this->requestTimeout,
-            $this->httpProxy,
-            $this->httpProxyPort
-        );
-    }
-
-    /**
-     * WebDriverBy factory.
+     * Manages access to WebDriverBy instance.
      *
      * @param string $mechanism
      * @param string $value
      *
      * @return WebDriverBy
-     * @throws InvalidArgument
      */
-    protected function createWebDriverByInstance($mechanism, $value = '')
+    protected function webDriverBy($mechanism = null, $value = null)
     {
+        if (! $this->webDriverBy instanceof WebDriverBy) {
+            $this->setWebDriverBy(
+                $this->webDriverByInstance($mechanism, $value)
+            );
+        }
+
+        return $this->webDriverBy;
+    }
+
+    /**
+     * Creates an instance of WebDriverBy.
+     *
+     * @param string $mechanism
+     * @param string $value
+     *
+     * @return WebDriverBy
+     */
+    protected function webDriverByInstance($mechanism = null, $value = null)
+    {
+        return WebDriverBy::create($mechanism, $value);
+    }
+
+    /**
+     * Sets internal WebDriverBy instance.
+     *
+     * @param WebDriverBy $webDriverBy
+     *
+     * @return $this
+     */
+    protected function setWebDriverBy(WebDriverBy $webDriverBy)
+    {
+        $this->webDriverBy = $webDriverBy;
+
+        return $this;
+    }
+
+    /**
+     * Manages access to desiredCapabilities instance.
+     *
+     * @return DesiredCapabilities
+     */
+    protected function desiredCapabilities()
+    {
+        if (! $this->desiredCapabilities instanceof DesiredCapabilities) {
+            $this->setDesiredCapabilities(
+                $this->desiredCapabilitiesInstance()
+            );
+        }
+
+        return $this->desiredCapabilities;
+    }
+
+    /**
+     * DesiredCapabilities factory.
+     *
+     * @return DesiredCapabilities
+     */
+    protected function desiredCapabilitiesInstance()
+    {
+        $this->validateBrowser($this->browser);
+
         try {
-            return WebDriverBy::$mechanism($value);
+            return call_user_func([DesiredCapabilities::class, $this->browser]);
         } catch (\Exception $e) {
-            throw new InvalidArgument("Invalid WebDriverBy mechanism: $mechanism");
+            $this->validatePlatform($this->platform);
+
+            return new DesiredCapabilities([
+                WebDriverCapabilityType::BROWSER_NAME => $this->browser,
+                WebDriverCapabilityType::PLATFORM     => $this->platform,
+            ]);
         }
     }
 
@@ -287,50 +353,27 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Creates and sets a DesiredCapabilities instance only if necessary.
+     * Manages access to Filesystem instance.
      *
-     * @return $this
+     * @return Filesystem
      */
-    protected function setupDesiredCapabilities()
+    protected function filesystem()
     {
-        if (! $this->desiredCapabilities instanceof DesiredCapabilities) {
-            $this->setDesiredCapabilities(
-                $this->createDesiredCapabilitiesInstance()
-            );
+        if (! $this->filesystem instanceof Filesystem) {
+            $this->setFilesystem($this->filesystemInstance());
         }
 
-        return $this;
+        return $this->filesystem;
     }
 
     /**
-     * Getter for desiredCapabilities property.
+     * Creates an instance of filesystem.
      *
-     * @return DesiredCapabilities
+     * @return Filesystem
      */
-    protected function desiredCapabilities()
+    protected function filesystemInstance()
     {
-        return $this->desiredCapabilities;
-    }
-
-    /**
-     * DesiredCapabilities factory.
-     *
-     * @return DesiredCapabilities
-     */
-    protected function createDesiredCapabilitiesInstance()
-    {
-        $this->validateBrowser($this->browser);
-
-        try {
-            return call_user_func([DesiredCapabilities::class, $this->browser]);
-        } catch (\Exception $e) {
-            $this->validatePlatform($this->platform);
-
-            return new DesiredCapabilities([
-                WebDriverCapabilityType::BROWSER_NAME => $this->browser,
-                WebDriverCapabilityType::PLATFORM     => $this->platform,
-            ]);
-        }
+        return new Filesystem;
     }
 
     /**
@@ -348,29 +391,41 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Creates and sets a Filesystem instance only if necessary.
+     * Manages access to Locator instance.
      *
-     * @return $this
+     * @return Locator
      */
-    protected function setupFilesystem()
+    protected function locator()
     {
-        if (! $this->filesystem instanceof Filesystem) {
-            $this->setFilesystem(
-                $this->createFilesystemInstance()
-            );
+        if (! $this->locator instanceof Locator) {
+            $this->setLocator($this->locatorInstance());
         }
 
-        return $this;
+        return $this->locator;
     }
 
     /**
-     * Creates an instance of filesystem.
+     * Creates an instance of Locator.
      *
-     * @return Filesystem
+     * @return Locator
      */
-    protected function createFilesystemInstance()
+    public function locatorInstance()
     {
-        return new Filesystem;
+        return new Locator;
+    }
+
+    /**
+     * Sets locator instance.
+     *
+     * @param Locator $locator
+     *
+     * @return $this
+     */
+    public function setLocator(Locator $locator)
+    {
+        $this->locator = $locator;
+
+        return $this;
     }
 
     /**
@@ -512,7 +567,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function webDriverUrl()
     {
-        return $this->webDriver->getCurrentURL();
+        return $this->webDriver()->getCurrentURL();
     }
 
     /**
@@ -550,7 +605,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
 
         $this->setUrl($url);
 
-        $this->webDriver->get($this->url());
+        $this->webDriver()->get($this->url());
 
         return $this->updateUrl();
     }
@@ -562,7 +617,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function pageTitle()
     {
-        return $this->webDriver->getTitle();
+        return $this->webDriver()->getTitle();
     }
 
     /**
@@ -572,7 +627,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function pageSource()
     {
-        return $this->webDriver->getPageSource();
+        return $this->webDriver()->getPageSource();
     }
 
     /**
@@ -585,10 +640,8 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function savePageSource($filepath)
     {
-        $this->setupFilesystem();
-
         try {
-            $this->filesystem->put($filepath, $this->pageSource());
+            $this->filesystem()->put($filepath, $this->pageSource());
         } catch (\Exception $e) {
             throw new InvalidArgument("Could not write the page source to file: $filepath");
         }
@@ -638,7 +691,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     {
         $finders = ['findBySelector', 'findByName', 'findById', 'findByValue', 'findByText'];
 
-        if (Locator::isXpath($locator)) {
+        if ($this->locator()->isXpath($locator)) {
             array_unshift($finders, 'findByXpath');
         }
 
@@ -662,7 +715,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findBy(WebDriverBy $by)
     {
-        $elements = $this->webDriver->findElements($by);
+        $elements = $this->webDriver()->findElements($by);
 
         return empty($elements)
             ? $elements
@@ -681,7 +734,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     protected function findOneBy(WebDriverBy $by)
     {
         try {
-            return $this->webDriver->findElement($by);
+            return $this->webDriver()->findElement($by);
         } catch (NoSuchElementException $e) {
             throw new NoSuchElement($e);
         }
@@ -696,7 +749,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByName($name)
     {
-        return $this->findBy(WebDriverBy::name($name));
+        return $this->findBy($this->webDriverBy()->name($name));
     }
 
     /**
@@ -708,7 +761,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findBySelector($selector)
     {
-        return $this->findBy(WebDriverBy::cssSelector($selector));
+        return $this->findBy($this->webDriverBy()->cssSelector($selector));
     }
 
     /**
@@ -732,7 +785,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findById($id)
     {
-        return $this->findBy(WebDriverBy::id($id));
+        return $this->findBy($this->webDriverBy()->id($id));
     }
 
     /**
@@ -896,7 +949,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByLinkText($text)
     {
-        return $this->findBy(WebDriverBy::linkText($text));
+        return $this->findBy($this->webDriverBy()->linkText($text));
     }
 
     /**
@@ -908,7 +961,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByLinkPartialText($partialText)
     {
-        return $this->findBy(WebDriverBy::partialLinkText($partialText));
+        return $this->findBy($this->webDriverBy()->partialLinkText($partialText));
     }
 
     /**
@@ -945,7 +998,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByXpath($xpath)
     {
-        return $this->findBy(WebDriverBy::xpath($xpath));
+        return $this->findBy($this->webDriverBy()->xpath($xpath));
     }
 
     /**
@@ -957,7 +1010,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function findByTag($tag)
     {
-        return $this->findBy(WebDriverBy::tagName($tag));
+        return $this->findBy($this->webDriverBy()->tagName($tag));
     }
 
     /**
@@ -1375,7 +1428,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     private function elementAction($action, $target, $changesUrl = false)
     {
-        $elements = $this->isLocator($target)
+        $elements = $this->locator()->isLocator($target)
             ? $this->find($target)
             : $target;
 
@@ -1439,18 +1492,6 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         is_array($wtf) and $wtf = end($wtf);
 
         return $wtf instanceof RemoteWebElement;
-    }
-
-    /**
-     * Checks whether it's a element locator or not.
-     *
-     * @param mixed $wtf Thing to check.
-     *
-     * @return bool
-     */
-    private function isLocator($wtf)
-    {
-        return is_string($wtf);
     }
 
     /**
