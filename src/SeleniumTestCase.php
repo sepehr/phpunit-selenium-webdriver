@@ -373,7 +373,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function filesystemInstance()
     {
-        return new Filesystem;
+        return Filesystem::create();
     }
 
     /**
