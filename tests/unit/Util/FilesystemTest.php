@@ -41,7 +41,7 @@ class FilesystemTest extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    public function putsDataIntoFile()
+    public function putsDataIntoFileAndCreateDirectoriesIfNotExist()
     {
         $content  = 'baz';
         $osPerms  = $this->getFilePerms(__FILE__);

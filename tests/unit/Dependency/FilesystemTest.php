@@ -24,8 +24,7 @@ class FilesystemTest extends UnitSeleniumTestCase
         $this->mock('alias:' . Filesystem::class)
             ->shouldReceive('create')
             ->once()
-            ->andReturn(Mockery::self())
-            ->mock();
+            ->andReturn(Mockery::self());
 
         $this->assertInstanceOf(Filesystem::class, $this->filesystem());
     }
@@ -33,10 +32,8 @@ class FilesystemTest extends UnitSeleniumTestCase
     /** @test */
     public function doesNotCreateANewInstanceIfAlreadyExists()
     {
-        $this->inject(
-            $this->mock(Filesystem::class)
-                ->shouldNotReceive('create')
-        );
+        $this->inject(Filesystem::class)
+            ->shouldNotReceive('create');
 
         $this->assertInstanceOf(Filesystem::class, $this->filesystem());
     }

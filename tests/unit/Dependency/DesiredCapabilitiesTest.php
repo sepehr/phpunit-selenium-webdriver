@@ -28,8 +28,7 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
             ->shouldReceive($browser = 'firefox')
             ->once()
             ->withNoArgs()
-            ->andReturn(Mockery::self())
-            ->mock();
+            ->andReturn(Mockery::self());
 
         $this->setBrowser($browser);
 
@@ -71,10 +70,8 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     /** @test */
     public function doesNotCreateANewInstanceIfAlreadyExists()
     {
-        $this->inject(
-            $this->mock(DesiredCapabilities::class)
-                ->shouldNotReceive($this->browser)
-        );
+        $this->inject(DesiredCapabilities::class)
+            ->shouldNotReceive($this->browser);
 
         $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
     }

@@ -3,27 +3,28 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class PageInteractionTest extends UnitSeleniumTestCase
 {
 
     /** @test */
     public function visitsAPageUrl()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('get')
-                ->once()
-                ->with($url = 'https://github.com/sepehr')
-                ->andReturn(Mockery::self())
-                ->mock()
-                ->shouldReceive('getCurrentURL')
-                ->once()
-                ->andReturn($url)
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('get')
+            ->once()
+            ->with($url = 'https://github.com/sepehr')
+            ->andReturn(Mockery::self())
+            ->shouldReceive('getCurrentURL')
+            ->once()
+            ->andReturn($url);
 
         $this->visit($url);
 
@@ -33,13 +34,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     /** @test */
     public function returnsPageTitle()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getTitle')
-                ->once()
-                ->andReturn($expected = 'Some sample page title...')
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getTitle')
+            ->once()
+            ->andReturn($expected = 'Some sample page title...');
 
         $this->assertSame($expected, $this->pageTitle());
     }
@@ -47,13 +45,10 @@ class PageInteractionTest extends UnitSeleniumTestCase
     /** @test */
     public function returnsPageSource()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getPageSource')
+            ->once()
+            ->andReturn($expected = '<html><body>Lorem ipsum...</body></html>');
 
         $this->assertSame($expected, $this->pageSource());
     }
@@ -61,22 +56,16 @@ class PageInteractionTest extends UnitSeleniumTestCase
     /** @test */
     public function savesPageSourceToFile()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getPageSource')
+            ->once()
+            ->andReturn($source = '<html><body>Lorem ipsum...</body></html>');
 
-        $this->injectMockedFilesystem(
-            Mockery::mock(Filesystem::class)
-                ->shouldReceive('put')
-                ->once()
-                ->with($filepath = '/tmp/source.html', $source)
-                ->andReturn(true)
-                ->getMock()
-        );
+        $this->inject(Filesystem::class)
+            ->shouldReceive('put')
+            ->once()
+            ->with($filepath = '/tmp/source.html', $source)
+            ->andReturn(true);
 
         $this->savePageSource($filepath);
     }
@@ -84,35 +73,19 @@ class PageInteractionTest extends UnitSeleniumTestCase
     /** @test */
     public function throwsAnExceptionWhenSavingPageSourceIntoAnInvalidFile()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getPageSource')
-                ->once()
-                ->andReturn($source = '<html><body>Lorem ipsum...</body></html>')
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getPageSource')
+            ->once()
+            ->andReturn($source = '<html><body>Lorem ipsum...</body></html>');
 
-        $this->injectMockedFilesystem(
-            Mockery::mock(Filesystem::class)
-                ->shouldReceive('put')
-                ->once()
-                ->with($filepath = '/some/invalid/path/source.html', $source)
-                ->andThrow(InvalidArgument::class)
-                ->getMock()
-        );
+        $this->inject(Filesystem::class)
+            ->shouldReceive('put')
+            ->once()
+            ->with($filepath = '/some/invalid/path/source.html', $source)
+            ->andThrow(InvalidArgument::class);
 
         $this->expectException(InvalidArgument::class);
 
         $this->savePageSource($filepath);
-    }
-
-    /**
-     * Injects a mocked Filesystem into SeleniumTestCase.
-     *
-     * @param Filesystem $mockedFilesystem
-     */
-    private function injectMockedFilesystem(Filesystem $mockedFilesystem)
-    {
-        $this->setFilesystem($mockedFilesystem);
     }
 }

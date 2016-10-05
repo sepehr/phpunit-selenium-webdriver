@@ -3,9 +3,10 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
-use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Util\Locator;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\RemoteWebElement;
+use Sepehr\PHPUnitSelenium\WebDriver\WebDriverBy;
 
 /**
  * @runTestsInSeparateProcesses
@@ -27,35 +28,29 @@ class ElementInteractionTest extends UnitSeleniumTestCase
      */
     public function dispatchesActionsOnElementsFoundByALocator($api, $apiArgs, $action)
     {
-        $elementMock = Mockery::mock('overload:' . RemoteWebElement::class)
+        $elMock = $this->mock(RemoteWebElement::class)
             ->shouldReceive($action)
             ->once()
             ->with($apiArgs[0])
             ->andReturn(Mockery::self())
             ->mock();
 
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('findElements')
-                ->with(WebDriverBy::class)
-                ->andReturn([$elementMock])
-                ->shouldReceive('getCurrentURL')
-                ->zeroOrMoreTimes()
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('findElements')
+            ->with(WebDriverBy::class)
+            ->andReturn([$elMock])
+            ->shouldReceive('getCurrentURL')
+            ->zeroOrMoreTimes();
 
-        Mockery::mock('alias:' . WebDriverBy::class)
+        $this->inject(WebDriverBy::class)
             ->shouldReceive('xpath')
             ->once()
             ->with($apiArgs[1])
-            ->andReturn(Mockery::self())
-            ->mock();
+            ->andReturn(Mockery::self());
 
-        Mockery::mock('alias:' . Locator::class)
-            ->shouldReceive('isXpath')
-            ->once()
-            ->with($apiArgs[1])
-            ->andReturn(true);
+        $this->inject(Locator::class)
+            ->shouldReceive('isLocator', 'isXpath')
+            ->andReturn(true, false);
 
         $this->$api(...$apiArgs);
     }

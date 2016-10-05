@@ -6,14 +6,16 @@ use Mockery;
 use Mockery\MockInterface;
 use phpmock\mockery\PHPMockery;
 use Mockery\CompositeExpectation;
+use Sepehr\PHPUnitSelenium\Util\Locator;
 use Sepehr\PHPUnitSelenium\Util\Filesystem;
 use Sepehr\PHPUnitSelenium\SeleniumTestCase;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Sepehr\PHPUnitSelenium\WebDriver\WebDriverBy;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 /**
- * Base class for all unit tests.
+ * Base class for all unit tests that deal with mocking.
  *
  * This may seem a little bit complicated, and in fact, it is! But in return
  * it provides an easy-to-use API to write unit tests as fast as possible. For
@@ -21,7 +23,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
  *
  *     $this->inject($this->mock(RemoteWebDriver::class));
  *
- * Or even better:
+ * Or better:
  *
  *     $this->inject(
  *         $this->mock('overload:' . DesiredCapabilities::class)
@@ -29,7 +31,15 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
  *             ->once()
  *     );
  *
- * How cool is that... Ahh, is that cool at all?!
+ * Or even better:
+ *
+ *     $this->inject(WebDriverBy::class)
+ *         ->shouldReceive('create')
+ *         ->once()
+ *         ->withAnyArgs()
+ *         ->andReturn(Mockery::slef());
+ *
+ * How cool is that?!
  */
 abstract class UnitSeleniumTestCase extends SeleniumTestCase
 {
@@ -51,12 +61,6 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
         PHPMockery::mock('Sepehr\PHPUnitSelenium', 'sleep')
             ->zeroOrMoreTimes()
             ->andReturn(0);
-
-        // Setup RemoteWebDriver aliased mock
-        $this->mock('alias:' . RemoteWebDriver::class, function ($mock) {
-            // Satisfy the expectation set by PHPUnit's @after annotation, by default.
-            return $mock->shouldReceive('quit');
-        });
 
         parent::setUp();
     }
@@ -83,7 +87,9 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
                 ? Mockery::mock($mockId, $closure)
                 : Mockery::mock($mockId);
         } catch (\Exception $e) {
-            throw new \Exception("Mock object could not be found/created with the identifier: $mockId");
+            throw new \Exception(
+                "Could not find/create a mock with identifier: $mockId\nMessage: {$e->getMessage()}"
+            );
         }
     }
 
@@ -114,6 +120,9 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
      */
     protected function injectWebDriver($mock = RemoteWebDriver::class)
     {
+        // Default behavior
+        $mock = $this->normalizeMock($mock)->shouldReceive('quit')->byDefault();
+
         return $this->injectDependency($mock, 'setWebDriver');
     }
 
@@ -130,6 +139,18 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     }
 
     /**
+     * Injects a mocked WebDriverBy into the SeleniumTestCase.
+     *
+     * @param MockInterface|CompositeExpectation|string $mock
+     *
+     * @return WebDriverBy
+     */
+    protected function injectWebDriverBy($mock = WebDriverBy::class)
+    {
+        return $this->injectDependency($mock, 'setWebDriverBy');
+    }
+
+    /**
      * Injects a mocked Filesystem into the SeleniumTestCase.
      *
      * @param MockInterface|CompositeExpectation|string $mock
@@ -139,6 +160,18 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     protected function injectFilesystem($mock = Filesystem::class)
     {
         return $this->injectDependency($mock, 'setFilesystem');
+    }
+
+    /**
+     * Injects a mocked Locator into the SeleniumTestCase.
+     *
+     * @param MockInterface|CompositeExpectation|string $mock
+     *
+     * @return Filesystem
+     */
+    protected function injectLocator($mock = Locator::class)
+    {
+        return $this->injectDependency($mock, 'setLocator');
     }
 
     /**

@@ -8,6 +8,11 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**
+ * Here we're testing the creation of a hard dependency. Even though we
+ * could easily inject a mocked copy of the dependency class into the SUT,
+ * we went the hard way and used aliased/overloaded mocks in few test methods,
+ * to actually test the creation of dependency class, when no instance is injected.
+ *
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
@@ -15,20 +20,19 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
 {
 
     /** @test */
-    public function doesNotCreateAWebDriverOnSetUp()
+    public function doesNotCreateAnInstanceOnSetUp()
     {
         $this->assertFalse($this->webDriverLoaded());
     }
 
     /**
      * @test
-     *
-     * We can easily inject a mocked WebDriver into the testcase,
-     * but here we're testing the process of instantiating it.
      */
-    public function createsAWebDriverInstanceUponCreatingNewSessions()
+    public function createsAnInstanceUponCreatingNewSessions()
     {
-        $this->webDriverMock
+        $this->inject(DesiredCapabilities::class);
+
+        $this->mock('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
             ->once()
             ->with(
@@ -40,44 +44,33 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
                 $this->httpProxyPort
             )
             ->andReturn(Mockery::self())
-            ->mock();
+            // It's only added when getting injected to SUT, so:
+            ->shouldReceive('quit');
 
-        Mockery::mock('alias:' . DesiredCapabilities::class)
-            ->shouldReceive($this->browser)
+        $this->createSession();
+
+        $this->assertTrue($this->webDriverLoaded());
+    }
+
+    /** @test */
+    public function doesNotCreateANewInstanceIfAlreadyExists()
+    {
+        $this->inject(RemoteWebDriver::class)
+            ->shouldNotReceive('create');
+
+        $this->createSession();
+
+        $this->assertTrue($this->webDriverLoaded());
+    }
+
+    /** @test */
+    public function canBeForcedToCreateANewInstanceEvenThoughOneAlreadyExists()
+    {
+        $this->inject('alias:' . RemoteWebDriver::class)
+            ->shouldReceive('create')
             ->once()
-            ->andReturn(Mockery::self())
-            ->mock();
-
-        $this->createSession();
-
-        $this->assertTrue($this->webDriverLoaded());
-    }
-
-    /** @test */
-    public function doesNotCreateANewWebDriverIfAlreadyExists()
-    {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldNotReceive('create')
-                ->getMock()
-        );
-
-        $this->createSession();
-
-        $this->assertTrue($this->webDriverLoaded());
-    }
-
-    /** @test */
-    public function canBeForcedToCreateANewWebDriverEvenThoughItAlreadyExists()
-    {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('create')
-                ->once()
-                ->withAnyArgs()
-                ->andReturn(Mockery::self())
-                ->mock()
-        );
+            ->withAnyArgs()
+            ->andReturn(Mockery::self());
 
         $this->forceCreateSession();
 
@@ -87,13 +80,10 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     /** @test */
     public function unloadsWebDriverWhenDestroyingSession()
     {
-        $this->injectMockedWebDriver();
+        $this->inject(RemoteWebDriver::class);
 
         $this->assertTrue($this->webDriverLoaded());
 
-        // We do not need to set an expectation to receive a "quit()"
-        // call on the WebDriver, as it's already set by default.
-        // See: UnitSeleniumTestCase::setUp()
         $this->destroySession();
 
         $this->assertFalse($this->webDriverLoaded());
@@ -102,7 +92,7 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     /** @test */
     public function returnsItsInstanceOfWebDriver()
     {
-        $this->injectMockedWebDriver();
+        $this->inject(RemoteWebDriver::class);
 
         $this->assertInstanceOf(RemoteWebDriver::class, $this->webDriver());
     }

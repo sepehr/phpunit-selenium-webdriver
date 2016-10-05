@@ -2,16 +2,21 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class SeleniumInteractionTest extends UnitSeleniumTestCase
 {
 
     /** @test */
     public function throwsAnExceptionIfSeleniumIsNotRunning()
     {
-        $this->webDriverMock
+        $this->mock('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
             ->once()
             ->andThrow(WebDriverCurlException::class);

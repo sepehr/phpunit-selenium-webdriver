@@ -2,6 +2,7 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit\Validation;
 
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
@@ -47,22 +48,6 @@ class UrlValidationTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function updatesUrlSourcingFromWebDriverUrl()
-    {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getCurrentURL')
-                ->once()
-                ->andReturn($expected = 'https://github.com/sepehr')
-                ->getMock()
-        );
-
-        $this->updateUrl();
-
-        $this->assertSame($expected, $this->url());
-    }
-
-    /** @test */
     public function assemblesProperFullUrl()
     {
         $this->setBaseUrl('https://github.com/');
@@ -73,15 +58,25 @@ class UrlValidationTest extends UnitSeleniumTestCase
     }
 
     /** @test */
+    public function updatesUrlSourcingFromWebDriverUrl()
+    {
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getCurrentURL')
+            ->once()
+            ->andReturn($expected = 'https://github.com/sepehr');
+
+        $this->updateUrl();
+
+        $this->assertSame($expected, $this->url());
+    }
+
+    /** @test */
     public function proxiesWebDriverCurrentUrl()
     {
-        $this->injectMockedWebDriver(
-            $this->webDriverMock
-                ->shouldReceive('getCurrentURL')
-                ->once()
-                ->andReturn($expected = 'https://github.com/')
-                ->getMock()
-        );
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getCurrentURL')
+            ->once()
+            ->andReturn($expected = 'https://github.com/sepehr');
 
         $this->assertSame($expected, $this->webDriverUrl());
     }
