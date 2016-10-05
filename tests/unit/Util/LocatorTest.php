@@ -16,7 +16,7 @@ class LocatorTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->locator = new Locator;
+        $this->locator = Locator::create();
 
         parent::setUp();
     }

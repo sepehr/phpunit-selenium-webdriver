@@ -411,7 +411,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     public function locatorInstance()
     {
-        return new Locator;
+        return Locator::create();
     }
 
     /**

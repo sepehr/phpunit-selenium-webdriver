@@ -9,6 +9,16 @@ class Locator
 {
 
     /**
+     * Named constructor.
+     *
+     * @return Locator
+     */
+    public static function create()
+    {
+        return new static();
+    }
+
+    /**
      * Validates a CSS selector.
      *
      * @param string $selector
