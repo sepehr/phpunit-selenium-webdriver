@@ -157,16 +157,11 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * @param bool $force Whether to force a new session or to user the old one.
      *
      * @return $this
-     * @throws SeleniumNotRunning
      */
     protected function createSession($force = false)
     {
         if ($force || ! $this->webDriverLoaded()) {
-            try {
-                $this->webDriver($force);
-            } catch (WebDriverCurlException $e) {
-                throw new SeleniumNotRunning($e->getMessage());
-            }
+            $this->webDriver($force);
         }
 
         return $this;
@@ -218,17 +213,22 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      * RemoteWebDriver factory.
      *
      * @return RemoteWebDriver
+     * @throws SeleniumNotRunning
      */
     protected function webDriverInstance()
     {
-        return RemoteWebDriver::create(
-            $this->host,
-            $this->desiredCapabilities(),
-            $this->connectionTimeout,
-            $this->requestTimeout,
-            $this->httpProxy,
-            $this->httpProxyPort
-        );
+        try {
+            return RemoteWebDriver::create(
+                $this->host,
+                $this->desiredCapabilities(),
+                $this->connectionTimeout,
+                $this->requestTimeout,
+                $this->httpProxy,
+                $this->httpProxyPort
+            );
+        } catch (WebDriverCurlException $e) {
+            throw new SeleniumNotRunning($e->getMessage());
+        }
     }
 
     /**
