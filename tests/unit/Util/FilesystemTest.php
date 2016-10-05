@@ -26,12 +26,18 @@ class FilesystemTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->filesystem = new Filesystem;
+        $this->filesystem = Filesystem::create();
 
         $this->shithole = sys_get_temp_dir() . '/' . microtime(true) . '/' . mt_rand();
         mkdir($this->shithole, 0777, true);
 
         $this->shithole = realpath($this->shithole);
+    }
+
+    /** @test */
+    public function createsAnInstance()
+    {
+        $this->assertInstanceOf(Filesystem::class, $this->filesystem);
     }
 
     /** @test */

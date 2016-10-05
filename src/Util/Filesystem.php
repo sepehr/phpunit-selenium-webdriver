@@ -6,6 +6,16 @@ class Filesystem
 {
 
     /**
+     * Creates an instance of the class.
+     *
+     * @return Filesystem
+     */
+    public static function create()
+    {
+        return new static();
+    }
+
+    /**
      * Writes to filesystem.
      *
      * @param string $filepath
