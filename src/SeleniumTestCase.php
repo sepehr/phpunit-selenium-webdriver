@@ -26,8 +26,8 @@ use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
  * Even though SeleniumTestCase allows setter injections for each
  * of its dependencies regarding better testability (e.g. setWebDriver(),
  * setFilesystem()), it needs to utilize devious hard dependencies to avoid
- * usage complexity and provide ease-of-use for the enduser with a minimum
- * possible setup.
+ * usage complexity and provide ease-of-use for the enduser to be able to write
+ * a testcase with minimum possible setup.
  *
  * Imagine; you need to write a quick Selenium test and, oh, first you need
  * to inject a bunch of dependencies to the testcase in order to make it work.
