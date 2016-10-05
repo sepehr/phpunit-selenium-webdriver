@@ -72,5 +72,4 @@ class ElementInteractionTest extends UnitSeleniumTestCase
             ['type', ['Life is a magnificent illusion', 'someLocator'], 'sendKeys']
         ];
     }
-
 }
