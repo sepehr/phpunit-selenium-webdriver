@@ -29,7 +29,7 @@ class ElementInteractionTest extends UnitSeleniumTestCase
      *
      * @dataProvider elementActionProvider
      */
-    public function dispatchesActionsOnElementsFoundByALocator($api, $apiArgs, $action, $actionArgs = [])
+    public function dispatchesVariousActionsOnAnElementFoundByALocator($api, $apiArgs, $action, $actionArgs = [])
     {
         $elementMock = $this->mock(RemoteWebElement::class)
             ->shouldReceive($action)
@@ -59,14 +59,7 @@ class ElementInteractionTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function throwsAnExceptionWhenHittingAnInvalidKey()
-    {
-        $this->expectException(InvalidArgument::class);
-
-        $this->hit('invalidKey', 'someLocator');
-    }
-
-    public function dispatchesActionsOnElementObjects()
+    public function dispatchesActionsOnAnElementObject()
     {
         $elementMock = $this->mock(RemoteWebElement::class)
             ->shouldReceive('sendKeys')
@@ -75,11 +68,94 @@ class ElementInteractionTest extends UnitSeleniumTestCase
             ->andReturn(Mockery::self())
             ->mock();
 
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getCurrentURL')
+            ->zeroOrMoreTimes();
+
         $this->inject(Locator::class)
             ->shouldReceive('isLocator')
             ->andReturn(false);
 
         $this->type($text, $elementMock);
+    }
+
+    /** @test */
+    public function dispatchesActionsOnACollectionOfElementsFoundByALocator()
+    {
+        $elementMock = $this->mock(RemoteWebElement::class)
+            ->shouldReceive('sendKeys')
+            ->times(3)
+            ->with($text = 'AsMyWorldComesCrashingDown,IllBeDancing...')
+            ->andReturn(Mockery::self())
+            ->mock();
+
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('findElements')
+            ->with(WebDriverBy::class)
+            ->andReturn([$elementMock, $elementMock, $elementMock])
+            ->shouldReceive('getCurrentURL')
+            ->zeroOrMoreTimes();
+
+        $this->inject(WebDriverBy::class)
+            ->shouldReceive('xpath')
+            ->once()
+            ->with($locator = 'someLocatorToMatchMultipleElements')
+            ->andReturn(Mockery::self());
+
+        $this->inject(Locator::class)
+            ->shouldReceive('isLocator', 'isXpath')
+            ->andReturn(true, false);
+
+        $this->type($text, $locator);
+    }
+
+    /** @test */
+    public function throwsAnExceptionWhenHittingAnInvalidKey()
+    {
+        $this->expectException(InvalidArgument::class);
+
+        $this->hit('invalidKey', 'someLocator');
+    }
+
+    /** @test */
+    public function throwsAnExceptionWhenDispatchingActionsOnNonElements()
+    {
+        $this->inject(Locator::class)
+            ->shouldReceive('isLocator')
+            ->andReturn(false);
+
+        $this->expectException(InvalidArgument::class);
+
+        $this->type(
+            'This dance is like a weapon... a self defence... against the present... the present tense.',
+            'nonElement'
+        );
+    }
+
+    /** @test */
+    public function throwsAnExceptionWhenDispatchingAnInvalidActionOnAnElement()
+    {
+        $elementMock = $this->mock(RemoteWebElement::class)
+            ->shouldReceive('invalidAction')
+            ->withAnyArgs()
+            ->andThrow(\Exception::class)
+            ->getMock();
+
+        $this->inject(RemoteWebDriver::class)
+            ->shouldReceive('getCurrentURL')
+            ->zeroOrMoreTimes();
+
+        $this->inject(Locator::class)
+            ->shouldReceive('isLocator')
+            ->andReturn(false);
+
+        $this->expectException(InvalidArgument::class);
+
+        // We cannot access the elementAction() method directly, as it's
+        // a private internal helper. Here we call type(), to get the flow
+        // going, and then rewire the internals of elementAction() to make
+        // it throw an exception...
+        $this->type('dummy', $elementMock);
     }
 
     /**
@@ -92,7 +168,7 @@ class ElementInteractionTest extends UnitSeleniumTestCase
         return [
             // Pattern: $api, $apiArgs, $action, $actionArgs
             ['type', ['magnificent illusion', 'someLocator'], 'sendKeys', ['magnificent illusion']],
-            ['fill', ['illbedancingdeafdumbandblind', 'someLocator'], 'sendKeys', ['illbedancingdeafdumbandblind']],
+            ['fill', ['illBeDancingDeafDumbAndBlind', 'someLocator'], 'sendKeys', ['illBeDancingDeafDumbAndBlind']],
             ['hit', ['enter', 'someLocator'], 'sendKeys', ["\xEE\x80\x87"]],
             ['hit', ["\xEE\x80\x8D", 'someLocator'], 'sendKeys', ["\xEE\x80\x8D"]],
             ['hit', [WebDriverKeys::SEMICOLON, 'someLocator'], 'sendKeys', ["\xEE\x80\x98"]],
