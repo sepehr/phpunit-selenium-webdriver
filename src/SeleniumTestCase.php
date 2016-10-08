@@ -1643,5 +1643,4 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
             "\xEE\x80\xC0",
         ];
     }
-
 }
