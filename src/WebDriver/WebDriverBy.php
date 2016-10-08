@@ -7,7 +7,7 @@ namespace Sepehr\PHPUnitSelenium\WebDriver;
  *
  * Facebook's WebDriverBy class does not utilize late static binding,
  * so we need to override all of its methods to make it extendable, see:
- * https://github.com/facebook/php-webdriver/issues/285
+ * https://github.com/facebook/php-webdriver/pull/333
  */
 class WebDriverBy extends \Facebook\WebDriver\WebDriverBy
 {
