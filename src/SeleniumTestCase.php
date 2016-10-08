@@ -588,6 +588,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         return $this;
     }
 
+    /**
+     * Validates provided key.
+     *
+     * @param string $key
+     *
+     * @return bool
+     */
+    protected function validateKey($key)
+    {
+        return in_array($key, $this->validKeys());
+    }
+
     // ----------------------------------------------------------------------------
     // Page Interaction
     // ----------------------------------------------------------------------------
@@ -1044,6 +1056,18 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Alias for type().
+     *
+     * @param array $args
+     *
+     * @return $this
+     */
+    protected function fill(...$args)
+    {
+        return $this->type(...$args);
+    }
+
+    /**
      * Hits a single key, hardly.
      *
      * @param string $key Key to hit.
@@ -1055,7 +1079,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function hit($key, $locator)
     {
-        if ($key[0] !== '\\') {
+        if (! $this->validateKey($key)) {
             $const = WebDriverKeys::class . '::' . strtoupper($key);
 
             if (! defined($const)) {
@@ -1447,7 +1471,7 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
                 try {
                     $element->$method(...$args);
                 } catch (\Exception $e) {
-                    throw new InvalidArgument("Invalid element action: $method");
+                    throw new InvalidArgument("Invalid element action: $method\nError: {$e->getMessage()}");
                 }
             }
         }
@@ -1544,4 +1568,80 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
             'phantomjs',
         ];
     }
+
+    /**
+     * Returns an array of valid keys acceptable by WebDriverKeys class.
+     *
+     * @return array
+     */
+    private function validKeys()
+    {
+        return [
+            "\xEE\x80\x80",
+            "\xEE\x80\x81",
+            "\xEE\x80\x82",
+            "\xEE\x80\x83",
+            "\xEE\x80\x84",
+            "\xEE\x80\x85",
+            "\xEE\x80\x86",
+            "\xEE\x80\x87",
+            "\xEE\x80\x88",
+            "\xEE\x80\x88",
+            "\xEE\x80\x89",
+            "\xEE\x80\x89",
+            "\xEE\x80\x8A",
+            "\xEE\x80\x8A",
+            "\xEE\x80\x8B",
+            "\xEE\x80\x8C",
+            "\xEE\x80\x8D",
+            "\xEE\x80\x8E",
+            "\xEE\x80\x8F",
+            "\xEE\x80\x90",
+            "\xEE\x80\x91",
+            "\xEE\x80\x92",
+            "\xEE\x80\x92",
+            "\xEE\x80\x93",
+            "\xEE\x80\x93",
+            "\xEE\x80\x94",
+            "\xEE\x80\x94",
+            "\xEE\x80\x95",
+            "\xEE\x80\x95",
+            "\xEE\x80\x96",
+            "\xEE\x80\x97",
+            "\xEE\x80\x98",
+            "\xEE\x80\x99",
+            "\xEE\x80\x9A",
+            "\xEE\x80\x9B",
+            "\xEE\x80\x9C",
+            "\xEE\x80\x9D",
+            "\xEE\x80\x9E",
+            "\xEE\x80\x9F",
+            "\xEE\x80\xA0",
+            "\xEE\x80\xA1",
+            "\xEE\x80\xA2",
+            "\xEE\x80\xA3",
+            "\xEE\x80\xA4",
+            "\xEE\x80\xA5",
+            "\xEE\x80\xA6",
+            "\xEE\x80\xA7",
+            "\xEE\x80\xA8",
+            "\xEE\x80\xA9",
+            "\xEE\x80\xB1",
+            "\xEE\x80\xB2",
+            "\xEE\x80\xB3",
+            "\xEE\x80\xB4",
+            "\xEE\x80\xB5",
+            "\xEE\x80\xB6",
+            "\xEE\x80\xB7",
+            "\xEE\x80\xB8",
+            "\xEE\x80\xB9",
+            "\xEE\x80\xBA",
+            "\xEE\x80\xBB",
+            "\xEE\x80\xBC",
+            "\xEE\x80\xBD",
+            "\xEE\x80\xBD",
+            "\xEE\x80\xC0",
+        ];
+    }
+
 }
