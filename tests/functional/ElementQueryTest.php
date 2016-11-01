@@ -5,10 +5,6 @@ namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class ElementQueryTest extends FunctionalSeleniumTestCase
 {
 
@@ -35,7 +31,9 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
      */
     public function findsElementsByDifferentMachanisms($finder, $finderArgs, $assert, $truth, $action, $actionArgs)
     {
-        $elements = $this->visitTestFile()->$finder(...$finderArgs);
+        $elements = $this
+            ->visitTestFile()
+            ->$finder(...$finderArgs);
 
         is_array($elements) or $elements = [$elements];
 
@@ -47,7 +45,9 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     /** @test */
     public function findsElementByPartialTextOrValue()
     {
-        $elements = $this->visitTestFile()->findByPartialTextOrValue($criteria = 'find');
+        $elements = $this
+            ->visitTestFile()
+            ->findByPartialTextOrValue($criteria = 'find');
 
         foreach ($elements as $element) {
             $test = $element->getAttribute('value') . $element->getText();
@@ -57,7 +57,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findByReturnsAnEmptyArrayForBadLocator()
+    public function returnsAnEmptyArrayWhenFindingElementsByABadLocator()
     {
         $by = $this->webDriverBy()->name('badLocator,VeryBadLocator!');
 
@@ -67,7 +67,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findByReturnsAnElementIfOnlyOneElementIsFound()
+    public function returnsAnElementInsteadOfAnArrayIfOnlyOneElementIsFound()
     {
         $by = $this->webDriverBy()->id('main');
         $el = $this->visitTestFile()->findBy($by);
@@ -76,7 +76,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findByReturnsAnArrayOfElementsIfMultipleElementsAreFound()
+    public function returnsAnArrayOfElementsIfMultipleElementsAreFound()
     {
         $by  = $this->webDriverBy()->cssSelector('.findMeByClass');
         $els = $this->visitTestFile()->findBy($by);
@@ -85,7 +85,7 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findOneByReturnsOnlyOneElementEvenThoughThereAreMultipleMatches()
+    public function returnsOnlyOneElementEvenThoughThereAreMultipleMatchesWhenFindingOne()
     {
         $by = $this->webDriverBy()->cssSelector('.findMeByClass');
         $el = $this->visitTestFile()->findOneBy($by);
@@ -94,13 +94,21 @@ class ElementQueryTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function findOneByThrowsAnExceptionIfNoElementIsFound()
+    public function throwsAnExceptionIfNoElementIsFoundWhenFindingOne()
     {
         $this->expectException(NoSuchElement::class);
 
         $this->visitTestFile()->findOneBy(
             $this->webDriverBy()->cssSelector('someBadSelector')
         );
+    }
+
+    /** @test */
+    public function findsAFormByALocator()
+    {
+        $form = $this->visitTestFile()->findForm('form-name');
+
+        $this->assertSame('form', $form->getTagName());
     }
 
     /**
