@@ -2,10 +2,6 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class PageInteractionTest extends FunctionalSeleniumTestCase
 {
 
@@ -30,45 +26,17 @@ class PageInteractionTest extends FunctionalSeleniumTestCase
     }
 
     /** @test */
-    public function performsAssertionsAgainstPageUrl()
-    {
-        $url = $this->getTestFileUrl('test.html');
-
-        $this->visit($url)
-            ->seePageIs($url)
-            ->dontSeePageIs('https://github.com/sepehr');
-    }
-
-    /** @test */
-    public function seesPageSource()
+    public function readsPageSource()
     {
         $this->assertNotEmpty($this->visitTestFile()->pageSource());
     }
 
     /** @test */
-    public function performsAssertionsAgainstPageSource()
-    {
-        $this->visitTestFile()
-            ->see('Webdriver-backed Selenium testcase')
-            ->dontSee('an area of the mind which could be called unsane, beyond sanity and yet not insane.');
-    }
-
-    /** @test */
-    public function seesPageTitle()
+    public function readsPageTitle()
     {
         $this->assertSame(
             $this->testFileTitle,
             $this->visitTestFile()->pageTitle()
         );
-    }
-
-    /** @test */
-    public function performsAssertionsAgainstPageTitle()
-    {
-        $this->visitTestFile()
-            ->seeTitle($this->testFileTitle)
-            ->seeTitleContains(substr($this->testFileTitle, 0, 5))
-            ->dontSeeTitle('There is fear to face...')
-            ->dontSeeTitleContains('...but happiness');
     }
 }
