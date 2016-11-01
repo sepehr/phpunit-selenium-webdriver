@@ -21,7 +21,6 @@ class UrlValidationTest extends UnitSeleniumTestCase
     public function normalizesUrlsByDroppingRedundantSlashes()
     {
         $this->setBaseUrl('https://github.com//');
-
         $this->setUrl('//sepehr/phpunit-selenium-webdriver//');
 
         $this->assertSame(
@@ -51,7 +50,6 @@ class UrlValidationTest extends UnitSeleniumTestCase
     public function assemblesProperFullUrl()
     {
         $this->setBaseUrl('https://github.com/');
-
         $this->setUrl('/sepehr');
 
         $this->assertSame('https://github.com/sepehr', $this->url());
@@ -60,9 +58,9 @@ class UrlValidationTest extends UnitSeleniumTestCase
     /** @test */
     public function updatesUrlSourcingFromWebDriverUrl()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('getCurrentURL')
-            ->once()
             ->andReturn($expected = 'https://github.com/sepehr');
 
         $this->updateUrl();
@@ -73,9 +71,9 @@ class UrlValidationTest extends UnitSeleniumTestCase
     /** @test */
     public function proxiesWebDriverCurrentUrl()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('getCurrentURL')
-            ->once()
             ->andReturn($expected = 'https://github.com/sepehr');
 
         $this->assertSame($expected, $this->webDriverUrl());

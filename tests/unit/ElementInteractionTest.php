@@ -2,18 +2,11 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
-use Mockery;
 use Facebook\WebDriver\WebDriverKeys;
-use Sepehr\PHPUnitSelenium\Util\Locator;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
-use Sepehr\PHPUnitSelenium\WebDriver\WebDriverBy;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class ElementInteractionTest extends UnitSeleniumTestCase
 {
 
@@ -31,82 +24,49 @@ class ElementInteractionTest extends UnitSeleniumTestCase
      */
     public function dispatchesVariousActionsOnAnElementFoundByALocator($api, $apiArgs, $action, $actionArgs = [])
     {
-        $elementMock = $this->mock(RemoteWebElement::class)
-            ->shouldReceive($action)
-            ->once()
-            ->with(...$actionArgs)
-            ->andReturn(Mockery::self())
-            ->mock();
-
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->with(WebDriverBy::class)
-            ->andReturn([$elementMock])
-            ->shouldReceive('getCurrentURL')
-            ->zeroOrMoreTimes();
-
-        $this->inject(WebDriverBy::class)
-            ->shouldReceive('xpath')
-            ->once()
-            ->with(end($apiArgs))
-            ->andReturn(Mockery::self());
-
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator', 'isXpath')
-            ->andReturn(true, false);
+            ->andReturn([$element = $this->spy(RemoteWebElement::class)]);
 
         $this->$api(...$apiArgs);
+
+        $element
+            ->shouldHaveReceived($action)
+            ->with(...$actionArgs)
+            ->once();
     }
 
     /** @test */
     public function dispatchesActionsOnAnElementObject()
     {
-        $elementMock = $this->mock(RemoteWebElement::class)
-            ->shouldReceive('sendKeys')
+        $this->injectSpy(RemoteWebDriver::class);
+        $element = $this->spy(RemoteWebElement::class);
+
+        $this->type($text = 'sending some keys...', $element);
+
+        $element
+            ->shouldHaveReceived('sendKeys')
             ->once()
-            ->with($text = 'sending some keys...')
-            ->andReturn(Mockery::self())
-            ->mock();
-
-        $this->inject(RemoteWebDriver::class)
-            ->shouldReceive('getCurrentURL')
-            ->zeroOrMoreTimes();
-
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator')
-            ->andReturn(false);
-
-        $this->type($text, $elementMock);
+            ->with($text);
     }
 
     /** @test */
     public function dispatchesActionsOnACollectionOfElementsFoundByALocator()
     {
-        $elementMock = $this->mock(RemoteWebElement::class)
-            ->shouldReceive('sendKeys')
-            ->times(3)
-            ->with($text = 'AsMyWorldComesCrashingDown,IllBeDancing...')
-            ->andReturn(Mockery::self())
-            ->mock();
+        $element = $this->spy(RemoteWebElement::class);
 
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->with(WebDriverBy::class)
-            ->andReturn([$elementMock, $elementMock, $elementMock])
-            ->shouldReceive('getCurrentURL')
-            ->zeroOrMoreTimes();
+            ->andReturn([$element, $element, $element]);
 
-        $this->inject(WebDriverBy::class)
-            ->shouldReceive('xpath')
-            ->once()
-            ->with($locator = 'someLocatorToMatchMultipleElements')
-            ->andReturn(Mockery::self());
+        $this->type($text = 'someText', $locator = 'locatorToMatchMultipleElements');
 
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator', 'isXpath')
-            ->andReturn(true, false);
-
-        $this->type($text, $locator);
+        $element
+            ->shouldHaveReceived('sendKeys')
+            ->times(3)
+            ->with($text);
     }
 
     /** @test */
@@ -120,42 +80,23 @@ class ElementInteractionTest extends UnitSeleniumTestCase
     /** @test */
     public function throwsAnExceptionWhenDispatchingActionsOnNonElements()
     {
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator')
-            ->andReturn(false);
-
         $this->expectException(InvalidArgument::class);
 
-        $this->type(
-            'This dance is like a weapon... a self defence... against the present... the present tense.',
-            'nonElement'
-        );
+        $this->type('This dance is like a weapon... a self defence.', ['nonElement']);
     }
 
     /** @test */
     public function throwsAnExceptionWhenDispatchingAnInvalidActionOnAnElement()
     {
-        $elementMock = $this->mock(RemoteWebElement::class)
+        $element = $this
+            ->mock(RemoteWebElement::class)
             ->shouldReceive('invalidAction')
-            ->withAnyArgs()
             ->andThrow(\Exception::class)
             ->getMock();
 
-        $this->inject(RemoteWebDriver::class)
-            ->shouldReceive('getCurrentURL')
-            ->zeroOrMoreTimes();
-
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator')
-            ->andReturn(false);
-
         $this->expectException(InvalidArgument::class);
 
-        // We cannot access the elementAction() method directly, as it's
-        // a private internal helper. Here we call type(), to get the flow
-        // going, and then rewire the internals of elementAction() to make
-        // it throw an exception...
-        $this->type('dummy', $elementMock);
+        $this->type('dummyText', $element);
     }
 
     /**

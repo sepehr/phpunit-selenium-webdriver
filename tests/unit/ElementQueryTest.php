@@ -3,138 +3,96 @@
 namespace Sepehr\PHPUnitSelenium\Tests\Unit;
 
 use Mockery;
-use Sepehr\PHPUnitSelenium\Util\Locator;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Sepehr\PHPUnitSelenium\WebDriver\WebDriverBy;
 use Sepehr\PHPUnitSelenium\Exception\NoSuchElement;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class ElementQueryTest extends UnitSeleniumTestCase
 {
 
     /** @test */
     public function findsElementsByAnInstanceOfWebDriverBy()
     {
-        $this->inject(RemoteWebDriver::class)
-            ->shouldReceive('findElements')
-            ->once()
-            ->with(WebDriverBy::class)
-            ->andReturn($expected = ['foo', 'bar', 'baz']);
+        $webDriver = $this->injectSpy(RemoteWebDriver::class);
 
-        $this->assertSame(
-            $expected,
-            $this->findBy($this->mock(WebDriverBy::class))
-        );
+        $this->findBy($webDriverBy = WebDriverBy::create());
+
+        $webDriver
+            ->shouldHaveReceived('findElements')
+            ->with($webDriverBy)
+            ->once();
     }
 
     /** @test */
     public function returnsAnEmptyArrayWhenNoElementIsFound()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->once()
-            ->with(WebDriverBy::class)
-            ->andReturn($expected = []);
+            ->andReturn([]);
 
-        $this->assertSame(
-            $expected,
-            $this->findBy($this->mock(WebDriverBy::class))
-        );
+        $this->assertSame([], $this->findBy(WebDriverBy::create()));
     }
 
     /** @test */
     public function unwrapsContainingArrayWhenFindsOnlyOneElement()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->once()
-            ->with(WebDriverBy::class)
-            ->andReturn($expected = ['foo']);
+            ->andReturn(['foo']);
 
-        $this->assertSame(
-            'foo',
-            $this->findBy($this->mock(WebDriverBy::class))
-        );
+        $this->assertSame('foo', $this->findBy(WebDriverBy::create()));
     }
 
     /** @test */
     public function findsJustOneElement()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElement')
-            ->once()
-            ->with(WebDriverBy::class)
             ->andReturn($expected = 'foo');
 
-        $this->assertSame(
-            $expected,
-            $this->findOneBy($this->mock(WebDriverBy::class))
-        );
+        $this->assertSame($expected, $this->findOneBy(WebDriverBy::create()));
     }
 
     /** @test */
-    public function throwsAnExceptionWhenTryingToFindJustOneElementAndItsNotThere()
+    public function throwsAnExceptionWhenTryingToFindJustOneElementAndItsNotAvailable()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElement')
-            ->once()
-            ->with(WebDriverBy::class)
             ->andThrow(NoSuchElementException::class);
 
         $this->expectException(NoSuchElement::class);
 
-        $this->findOneBy($this->mock(WebDriverBy::class));
+        $this->findOneBy(WebDriverBy::create());
     }
 
     /** @test */
     public function findsElementsByXpathLocator()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->once()
-            ->with(WebDriverBy::class)
             ->andReturn($expected = ['el1', 'el2']);
 
-        $this->inject(WebDriverBy::class)
-            ->shouldReceive('xpath')
-            ->once()
-            ->with($locator = 'someLocator')
-            ->andReturn(Mockery::self());
-
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator', 'isXpath')
-            ->with($locator)
-            ->andReturn(true, false);
-
-        $this->assertSame($expected, $this->find($locator));
+        $this->assertSame($expected, $this->find('//*[@id="main"]/section[1]/p'));
     }
 
     /** @test */
-    public function throwsAnExceptionIfNoElementIsFoundByLocator()
+    public function throwsAnExceptionIfNoElementIsFoundByProvidedLocator()
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectSpy(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->times(6)
-            ->with(WebDriverBy::class)
-            ->andReturn([]);
-
-        $this->inject(WebDriverBy::class)
-            ->shouldReceive('xpath', 'cssSelector', 'name', 'id')
-            ->withAnyArgs()
-            ->andReturn(Mockery::self());
-
-        $this->inject(Locator::class)
-            ->shouldReceive('isLocator', 'isXpath')
-            ->with($locator = 'someLocator')
-            ->andReturn(true, false);
+            ->times(6);
 
         $this->expectException(NoSuchElement::class);
 
-        $this->find($locator);
+        $this->find($locator = 'someLocator');
     }
 
     /**
@@ -151,19 +109,16 @@ class ElementQueryTest extends UnitSeleniumTestCase
      */
     public function findsElementsByDifferentMachanisms($api, array $args, $mechanism, $alt = null)
     {
-        $this->inject(RemoteWebDriver::class)
-            ->shouldReceive('findElements')
-            ->once()
-            ->with(WebDriverBy::class)
-            ->andReturn($expected = 'foundElement');
+        $this->injectSpy(RemoteWebDriver::class);
 
-        $this->inject(WebDriverBy::class)
+        $this
+            ->injectMock(WebDriverBy::class)
             ->shouldReceive($mechanism)
             ->once()
             ->with($alt ? $alt : $args[0])
             ->andReturn(Mockery::self());
 
-        $this->assertSame($expected, $this->$api(...$args));
+        $this->$api(...$args);
     }
 
     /**
@@ -180,13 +135,14 @@ class ElementQueryTest extends UnitSeleniumTestCase
      */
     public function findsElementsByDifferentFallbackMachanisms($api, array $args, array $mechanism, array $alt)
     {
-        $this->inject(RemoteWebDriver::class)
+        $this
+            ->injectMock(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->twice()
-            ->with(WebDriverBy::class)
             ->andReturn([], $expected = 'foundElement');
 
-        $this->inject(WebDriverBy::class)
+        $this
+            ->injectMock(WebDriverBy::class)
             ->shouldReceive($mechanism[0])
             ->once()
             ->with($alt[0])
@@ -197,6 +153,41 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ->andReturn(Mockery::self());
 
         $this->assertSame($expected, $this->$api(...$args));
+    }
+
+    /** @test */
+    public function findsFormElements()
+    {
+        $element = $this
+            ->mock(RemoteWebElement::class)
+            ->shouldReceive('getTagName')
+            ->andReturn('form')
+            ->getMock();
+
+        $this
+            ->injectSpy(RemoteWebDriver::class)
+            ->shouldReceive('findElements')
+            ->andReturn([$element]);
+
+        $this->assertInstanceOf(RemoteWebElement::class, $this->findForm('formLocator'));
+    }
+
+    /** @test */
+    public function throwsAnExceptionWhenLocatorMatchesANonFormElement()
+    {
+        $element = $this
+            ->mock(RemoteWebElement::class)
+            ->shouldReceive('getTagName')
+            ->andReturn('div');
+
+        $this
+            ->injectSpy(RemoteWebDriver::class)
+            ->shouldReceive('findElements')
+            ->andReturn([$element->getMock()]);
+
+        $this->expectException(NoSuchElement::class);
+
+        $this->findForm('nonFormLocator');
     }
 
     /**
@@ -222,9 +213,6 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ['findByText', ['someText', '*'], 'xpath', "//*[text()='someText']"],
             ['findByBody', ['someText', '*'], 'xpath', "//*[text()='someText']"],
             ['findByPartialText', ['someText', '*'], 'xpath', "//*[contains(text(), 'someText')]"],
-            ['findByTextOrValue', ['someText', '*'], 'xpath', "//*[text()='someText']"],
-            ['findByPartialTextOrValue', ['someText', '*'], 'xpath', "//*[contains(text(), 'someText')]"],
-            ['findByNameOrId', ['someName'], 'name'],
             ['findByLinkText', ['someText'], 'linkText'],
             ['findByLinkPartialText', ['someText'], 'partialLinkText'],
             ['findByLinkHref', ['https://g.cn/'], 'cssSelector', "a[href='https://g.cn/']"],

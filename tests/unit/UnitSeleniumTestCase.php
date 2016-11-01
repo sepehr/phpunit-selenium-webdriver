@@ -15,13 +15,13 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 /**
- * Base class for all unit tests that deal with mocking.
+ * Base class for all unit tests that deal with test doubles.
  *
  * This may seem a little bit complicated, and in fact, it is! But in return
  * it provides an easy-to-use API to write unit tests as fast as possible. For
  * example, let's inject a dependency mock into the SUT:
  *
- *     $this->inject($this->mock(RemoteWebDriver::class));
+ *     $this->inject($this->spy(RemoteWebDriver::class));
  *
  * Or better:
  *
@@ -46,11 +46,11 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     use MockeryPHPUnitIntegration;
 
     /**
-     * An array of reusable dependency mocks.
+     * An array of reusable dependency test doubles.
      *
      * @var MockInterface[]
      */
-    protected $mocks = [];
+    protected $doubles = [];
 
     /**
      * Test setup.
@@ -66,7 +66,36 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     }
 
     /**
-     * Manages mocks dependency array.
+     * Manages test doubles.
+     *
+     * @param string $doubleId
+     * @param \Closure|null $closure
+     * @param string $doubleType
+     *
+     * @return MockInterface
+     * @throws \Exception
+     */
+    protected function double($doubleId, $closure = null, $doubleType = 'mock')
+    {
+        if (key_exists($doubleId, $this->doubles)) {
+            return $closure
+                ? $closure($this->doubles[$doubleId])
+                : $this->doubles[$doubleId];
+        }
+
+        try {
+            return $this->doubles[$doubleId] = $closure
+                ? Mockery::$doubleType($doubleId, $closure)
+                : Mockery::$doubleType($doubleId);
+        } catch (\Exception $e) {
+            throw new \Exception(
+                "Could not find/create a $doubleType with identifier: $doubleId\nMessage: {$e->getMessage()}"
+            );
+        }
+    }
+
+    /**
+     * Mock interface.
      *
      * @param string $mockId
      * @param \Closure|null $closure
@@ -76,190 +105,215 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
      */
     protected function mock($mockId, $closure = null)
     {
-        if (key_exists($mockId, $this->mocks)) {
-            return $closure
-                ? $closure($this->mocks[$mockId])
-                : $this->mocks[$mockId];
-        }
-
-        try {
-            return $this->mocks[$mockId] = $closure
-                ? Mockery::mock($mockId, $closure)
-                : Mockery::mock($mockId);
-        } catch (\Exception $e) {
-            throw new \Exception(
-                "Could not find/create a mock with identifier: $mockId\nMessage: {$e->getMessage()}"
-            );
-        }
+        return $this->double($mockId, $closure, 'mock');
     }
 
     /**
-     * Genius mock injector; she knows how to inject a mock.
+     * Spy interface.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param string $spyId
+     * @param \Closure|null $closure
+     *
+     * @return MockInterface
+     * @throws \Exception
+     */
+    protected function spy($spyId, $closure = null)
+    {
+        return $this->double($spyId, $closure, 'spy');
+    }
+
+    /**
+     * Genius test double injector; she knows how to inject!
+     *
+     * @param MockInterface|CompositeExpectation|string $double
+     * @param string $doubleType
      *
      * @return MockInterface
      */
-    protected function inject($mock)
+    protected function inject($double, $doubleType = 'mock')
     {
-        $mock = $this->normalizeMock($mock);
+        $double = $this->normalizeDouble($double, $doubleType);
 
-        $injector = $this->getDependencyInjector($mock);
+        $injector = $this->getDependencyInjector($double);
 
         // Each dependency might have its own logic for
         // injection, so the separate methods...
-        return $this->$injector($mock);
+        return $this->$injector($double);
     }
 
     /**
-     * Injects a mocked RemoteWebDriver into the SeleniumTestCase.
+     * Injects a mock.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
+     *
+     * @return MockInterface
+     */
+    protected function injectMock($double)
+    {
+        return $this->inject($double, 'mock');
+    }
+
+    /**
+     * Injects a spy.
+     *
+     * @param MockInterface|CompositeExpectation|string $double
+     *
+     * @return MockInterface
+     */
+    protected function injectSpy($double)
+    {
+        return $this->inject($double, 'spy');
+    }
+
+    /**
+     * Injects a RemoteWebDriver double into the SeleniumTestCase.
+     *
+     * @param MockInterface|CompositeExpectation|string $double
      *
      * @return RemoteWebDriver
      */
-    protected function injectWebDriver($mock = RemoteWebDriver::class)
+    protected function injectWebDriver($double = RemoteWebDriver::class)
     {
-        // Default behavior
-        $mock = $this->normalizeMock($mock)->shouldReceive('quit')->byDefault();
+        // Default behavior for mock doubles
+        $double = $this->normalizeDouble($double)->shouldReceive('quit')->byDefault();
 
-        return $this->injectDependency($mock, 'setWebDriver');
+        return $this->injectDependency($double, 'setWebDriver');
     }
 
     /**
-     * Injects a mocked DesiredCapabilities into the SeleniumTestCase.
+     * Injects a DesiredCapabilities double into the SeleniumTestCase.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
      *
      * @return DesiredCapabilities
      */
-    protected function injectDesiredCapabilities($mock = DesiredCapabilities::class)
+    protected function injectDesiredCapabilities($double = DesiredCapabilities::class)
     {
-        return $this->injectDependency($mock, 'setDesiredCapabilities');
+        return $this->injectDependency($double, 'setDesiredCapabilities');
     }
 
     /**
-     * Injects a mocked WebDriverBy into the SeleniumTestCase.
+     * Injects a WebDriverBy double into the SeleniumTestCase.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
      *
      * @return WebDriverBy
      */
-    protected function injectWebDriverBy($mock = WebDriverBy::class)
+    protected function injectWebDriverBy($double = WebDriverBy::class)
     {
-        return $this->injectDependency($mock, 'setWebDriverBy');
+        return $this->injectDependency($double, 'setWebDriverBy');
     }
 
     /**
-     * Injects a mocked Filesystem into the SeleniumTestCase.
+     * Injects a Filesystem double into the SeleniumTestCase.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
      *
      * @return Filesystem
      */
-    protected function injectFilesystem($mock = Filesystem::class)
+    protected function injectFilesystem($double = Filesystem::class)
     {
-        return $this->injectDependency($mock, 'setFilesystem');
+        return $this->injectDependency($double, 'setFilesystem');
     }
 
     /**
-     * Injects a mocked Locator into the SeleniumTestCase.
+     * Injects a Locator double into the SeleniumTestCase.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
      *
      * @return Filesystem
      */
-    protected function injectLocator($mock = Locator::class)
+    protected function injectLocator($double = Locator::class)
     {
-        return $this->injectDependency($mock, 'setLocator');
+        return $this->injectDependency($double, 'setLocator');
     }
 
     /**
-     * Injects a mocked dependency into the SeleniumTestCase.
+     * Injects a dependency double into the SeleniumTestCase.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
      * @param string|null $setter
      *
      * @return MockInterface
      */
-    protected function injectDependency($mock, $setter = null)
+    protected function injectDependency($double, $setter = null)
     {
-        $mock   = $this->normalizeMock($mock);
-        $setter = $setter ? $setter : $this->getDependencySetter($mock);
+        $double   = $this->normalizeDouble($double);
+        $setter = $setter ? $setter : $this->getDependencySetter($double);
 
-        $this->$setter($mock);
+        $this->$setter($double);
 
-        return $mock;
+        return $double;
     }
 
     /**
      * Returns setter method name from a dependency mock object.
      *
-     * @param MockInterface $mock
+     * @param MockInterface $double
      *
      * @return string
      */
-    private function getDependencySetter($mock)
+    private function getDependencySetter($double)
     {
-        return $this->getDependencyMethodName($mock, 'set');
+        return $this->getDependencyMethodName($double, 'set');
     }
 
     /**
      * Returns injector method name from a dependency mock object.
      *
-     * @param MockInterface $mock
+     * @param MockInterface $double
      *
      * @return string
      */
-    private function getDependencyInjector($mock)
+    private function getDependencyInjector($double)
     {
-        return $this->getDependencyMethodName($mock, 'inject');
+        return $this->getDependencyMethodName($double, 'inject');
     }
 
     /**
      * Returns setter/injector method name for a dependency mock.
      *
-     * @param MockInterface $mock
+     * @param MockInterface $double
      * @param string $type
      *
      * @return string
      * @throws \Exception
      */
-    private function getDependencyMethodName(MockInterface $mock, $type)
+    private function getDependencyMethodName(MockInterface $double, $type)
     {
-        $fqn    = $this->getDependencyFqn($mock);
+        $fqn    = $this->getDependencyFqn($double);
         $method = $type . $this->getDependencyName($this->getDependencyClass($fqn));
 
         if (method_exists($this, $method)) {
             return $method;
         }
 
-        throw new \Exception("Could not find the \"$type\" method for: " . get_class($mock));
+        throw new \Exception("Could not find the \"$type\" method for: " . get_class($double));
     }
 
     /**
-     * Returns FQN of the mocked object.
+     * Returns FQN of the test double object.
      *
      * This is too much, I know :/
      *
-     * @param MockInterface $mock
+     * @param MockInterface $double
      *
      * @return string
      * @throws \Exception
      */
-    private function getDependencyFqn($mock)
+    private function getDependencyFqn($double)
     {
         $fqn = preg_replace(
             '/^Mockery\\\(\d+)\\\/',
             '',
-            str_replace('_', '\\', get_class($mock))
+            str_replace('_', '\\', get_class($double))
         );
 
         if (class_exists($fqn)) {
             return $fqn;
         }
 
-        throw new \Exception('Could not extract the FQN of original class from mock: ' . get_class($mock));
+        throw new \Exception('Could not extract the FQN of original class from mock: ' . get_class($double));
     }
 
     /**
@@ -293,25 +347,26 @@ abstract class UnitSeleniumTestCase extends SeleniumTestCase
     }
 
     /**
-     * Normalizes a mock object.
+     * Normalizes a test double object.
      *
-     * @param MockInterface|CompositeExpectation|string $mock
+     * @param MockInterface|CompositeExpectation|string $double
+     * @param string $doubleType
      *
      * @return MockInterface
      * @throws \Exception
      */
-    private function normalizeMock($mock)
+    private function normalizeDouble($double, $doubleType = 'mock')
     {
-        if (is_string($mock)) {
-            $mock = $this->mock($mock);
-        } elseif ($mock instanceof CompositeExpectation) {
-            $mock = $mock->getMock();
+        if (is_string($double)) {
+            $double = $this->$doubleType($double);
+        } elseif ($double instanceof CompositeExpectation) {
+            $double = $double->getMock();
         }
 
-        if (! $mock instanceof MockInterface) {
-            throw new \Exception('Cannot inject an invalid mock man, what the fuck?!');
+        if (! $double instanceof MockInterface) {
+            throw new \Exception('Cannot inject an invalid test double, what the fuck?!');
         }
 
-        return $mock;
+        return $double;
     }
 }

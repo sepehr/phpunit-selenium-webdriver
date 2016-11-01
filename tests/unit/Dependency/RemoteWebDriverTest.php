@@ -8,11 +8,6 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
 /**
- * Here we're testing the creation of a hard dependency. Even though we
- * could easily inject a mocked copy of the dependency class into the SUT,
- * we went the hard way and used aliased/overloaded mocks in few test methods,
- * to actually test the creation of dependency class, when no instance is injected.
- *
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
@@ -28,13 +23,11 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     /**
      * @test
      */
-    public function createsAnInstanceUponCreatingNewSessions()
+    public function createsAnInstanceWithProperArgsUponCreatingNewSessions()
     {
-        $this->inject(DesiredCapabilities::class);
-
-        $this->mock('alias:' . RemoteWebDriver::class)
+        $this
+            ->spy('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
-            ->once()
             ->with(
                 $this->host,
                 DesiredCapabilities::class,
@@ -43,9 +36,8 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
                 $this->httpProxy,
                 $this->httpProxyPort
             )
-            ->andReturn(Mockery::self())
-            // It's only added when getting injected to SUT, so:
-            ->shouldReceive('quit');
+            ->once()
+            ->andReturn(Mockery::self());
 
         $this->createSession();
 
@@ -55,21 +47,19 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     /** @test */
     public function doesNotCreateANewInstanceIfAlreadyExists()
     {
-        $this->inject(RemoteWebDriver::class)
-            ->shouldNotReceive('create');
+        $webDriver = $this->injectSpy(RemoteWebDriver::class);
 
         $this->createSession();
 
-        $this->assertTrue($this->webDriverLoaded());
+        $webDriver->shouldNotHaveReceived('create');
     }
 
     /** @test */
     public function canBeForcedToCreateANewInstanceEvenThoughOneAlreadyExists()
     {
-        $this->inject('alias:' . RemoteWebDriver::class)
+        $this
+            ->injectSpy('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
-            ->once()
-            ->withAnyArgs()
             ->andReturn(Mockery::self());
 
         $this->forceCreateSession();
@@ -78,22 +68,21 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     }
 
     /** @test */
-    public function unloadsWebDriverWhenDestroyingSession()
+    public function unloadsAndQuitsWebDriverWhenDestroyingSession()
     {
-        $this->inject(RemoteWebDriver::class);
-
-        $this->assertTrue($this->webDriverLoaded());
+        $webDriver = $this->injectSpy(RemoteWebDriver::class);
 
         $this->destroySession();
 
+        $webDriver->shouldHaveReceived('quit');
         $this->assertFalse($this->webDriverLoaded());
     }
 
     /** @test */
     public function returnsItsInstanceOfWebDriver()
     {
-        $this->inject(RemoteWebDriver::class);
+        $webDriver = $this->inject(RemoteWebDriver::class);
 
-        $this->assertInstanceOf(RemoteWebDriver::class, $this->webDriver());
+        $this->assertSame($webDriver, $this->webDriver());
     }
 }

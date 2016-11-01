@@ -2,48 +2,34 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Unit\Dependency;
 
-use Mockery;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\WebDriverBrowserType;
 use Sepehr\PHPUnitSelenium\Exception\InvalidArgument;
 use Sepehr\PHPUnitSelenium\Tests\Unit\UnitSeleniumTestCase;
 
-/**
- * Here we're testing the creation of a hard dependency. Even though we
- * could easily inject a mocked copy of the dependency class into the SUT,
- * we went the hard way and used aliased/overloaded mocks in few test methods,
- * to actually test the creation of dependency class, when no instance is injected.
- *
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class DesiredCapabilitiesTest extends UnitSeleniumTestCase
 {
 
     /** @test */
     public function createsAnInstanceForAValidBrowserThroughShortcutMethods()
     {
-        $this->mock('alias:' . DesiredCapabilities::class)
-            // e.g. DesiredCapabilities::firefox()
-            ->shouldReceive($browser = 'firefox')
-            ->once()
-            ->withNoArgs()
-            ->andReturn(Mockery::self());
+        $this->setBrowser($browser = 'firefox');
 
-        $this->setBrowser($browser);
+        $desiredCapabilities = $this->desiredCapabilities();
 
-        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
+        $this->assertInstanceOf(DesiredCapabilities::class, $desiredCapabilities);
+        $this->assertSame($browser, $desiredCapabilities->getBrowserName());
     }
 
     /** @test */
     public function createsAnInstanceForAValidBrowserThroughInstantiating()
     {
-        $this->setBrowser(WebDriverBrowserType::KONQUEROR);
+        $this->setBrowser($browser = WebDriverBrowserType::KONQUEROR);
 
-        // e.g. new DesiredCapabilities([...])
-        $this->mock('overload:' . DesiredCapabilities::class);
+        $desiredCapabilities = $this->desiredCapabilities();
 
-        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
+        $this->assertInstanceOf(DesiredCapabilities::class, $desiredCapabilities);
+        $this->assertSame($browser, $desiredCapabilities->getBrowserName());
     }
 
     /** @test */
@@ -70,9 +56,10 @@ class DesiredCapabilitiesTest extends UnitSeleniumTestCase
     /** @test */
     public function doesNotCreateANewInstanceIfAlreadyExists()
     {
-        $this->inject(DesiredCapabilities::class)
-            ->shouldNotReceive($this->browser);
+        $this->setDesiredCapabilities(
+            $desiredCapabilities = $this->desiredCapabilitiesInstance()
+        );
 
-        $this->assertInstanceOf(DesiredCapabilities::class, $this->desiredCapabilities());
+        $this->assertSame($desiredCapabilities, $this->desiredCapabilities());
     }
 }
