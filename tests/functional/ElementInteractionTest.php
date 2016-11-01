@@ -2,17 +2,14 @@
 
 namespace Sepehr\PHPUnitSelenium\Tests\Functional;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class ElementInteractionTest extends FunctionalSeleniumTestCase
 {
 
     /** @test */
     public function typesIntoAnInputElement()
     {
-        $this->visitTestFile()
+        $this
+            ->visitTestFile()
             ->type($expected = 'Life is a magnificent illusion...', $target = 'typeIntoMe');
 
         $this->assertSame(
@@ -24,7 +21,9 @@ class ElementInteractionTest extends FunctionalSeleniumTestCase
     /** @test */
     public function clicksOnANonLinkElement()
     {
-        $this->visitTestFile()->click($target = 'onClickChange');
+        $this
+            ->visitTestFile()
+            ->click($target = 'onClickChange');
 
         $this->assertSame(
             'Oh, you clicker!',
@@ -35,7 +34,9 @@ class ElementInteractionTest extends FunctionalSeleniumTestCase
     /** @test */
     public function clicksOnALinkAnchor()
     {
-        $this->visitTestFile()->click('SeleniumHQ');
+        $this
+            ->visitTestFile()
+            ->click('SeleniumHQ');
 
         $this->assertSame('http://www.seleniumhq.org', $this->url());
     }
@@ -43,7 +44,8 @@ class ElementInteractionTest extends FunctionalSeleniumTestCase
     /** @test */
     public function clearsAnInput()
     {
-        $this->visitTestFile()
+        $this
+            ->visitTestFile()
             ->type('Something I want to clear right now!', $target = 'findMeByName')
             ->clear($target);
 
@@ -53,7 +55,9 @@ class ElementInteractionTest extends FunctionalSeleniumTestCase
     /** @test */
     public function hitsKeysOnElements()
     {
-        $this->visitTestFile()->hit('enter', $target = 'hitEnterOnMe');
+        $this
+            ->visitTestFile()
+            ->hit('enter', $target = 'hitEnterOnMe');
 
         $this->assertSame('', $this->findById($target)->getAttribute('value'));
     }
