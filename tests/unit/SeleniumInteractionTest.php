@@ -6,6 +6,10 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Exception\WebDriverCurlException;
 use Sepehr\PHPUnitSelenium\Exception\SeleniumNotRunning;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class SeleniumInteractionTest extends UnitSeleniumTestCase
 {
 
@@ -13,12 +17,13 @@ class SeleniumInteractionTest extends UnitSeleniumTestCase
     public function throwsAnExceptionIfSeleniumIsNotRunning()
     {
         $this
-            ->inject(RemoteWebDriver::class)
+            ->mock('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
+            ->once()
             ->andThrow(WebDriverCurlException::class);
 
         $this->expectException(SeleniumNotRunning::class);
 
-        $this->forceCreateSession();
+        $this->createSession();
     }
 }
