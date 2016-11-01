@@ -1,4 +1,12 @@
 <?php
+/*
+ * This file is part of the sepehr/phpunit-selenium-webdriver package.
+ *
+ * (c) Sepehr Lajevardi <lajevardi@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Sepehr\PHPUnitSelenium;
 
@@ -1038,6 +1046,28 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
         return $this->findByAttribute('tabindex', (string) $tabIndex, $element, true);
     }
 
+    /**
+     * Finds a form by locator.
+     *
+     * @param string $locator Form locator.
+     *
+     * @return RemoteWebElement|RemoteWebElement[]
+     * @throws NoSuchElement
+     *
+     * @todo Handle multiple forms.
+     */
+    protected function findForm($locator)
+    {
+        $element = $this->find($locator);
+
+        if ($element->getTagName() == 'form') {
+            return $element;
+        }
+
+        throw new NoSuchElement("Could not find a form with this locator: $locator");
+    }
+
+
     // ----------------------------------------------------------------------------
     // Element Interaction
     // ----------------------------------------------------------------------------
@@ -1159,27 +1189,32 @@ abstract class SeleniumTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Fills a field.
      *
-     * @param string|RemoteWebElement $locator Element locator.
+     * @param string|RemoteWebElement $locator Element name locator.
      * @param string $value
      *
      * @return $this
+     * @throws NoSuchElement
      */
     protected function fillField($locator, $value)
     {
-        return $this->type($value, $locator);
+        if ($field = $this->findByName($locator)) {
+            return $this->type($value, $field);
+        }
+
+        throw new NoSuchElement("Could not find a field with name: $locator");
     }
 
     /**
      * Fills a form.
      *
      * @param string|RemoteWebElement $locator Form element locator.
-     * @param array $formData Array of name/value pairs as form data for submission.
+     * @param array $formData Array of name/value pairs as form data.
      *
      * @return $this
      */
     protected function fillForm($locator, $formData = [])
     {
-        // @TODO: Implement...
+        // @todo: Implement...
     }
 
     /**
