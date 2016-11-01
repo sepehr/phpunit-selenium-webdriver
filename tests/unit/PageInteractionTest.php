@@ -61,25 +61,22 @@ class PageInteractionTest extends UnitSeleniumTestCase
 
         $filesystem
             ->shouldHaveReceived('put')
-            ->with($filepath, $source);
+            ->with($filepath, $source)
+            ->once();
     }
 
     /** @test */
     public function throwsAnExceptionWhenSavingPageSourceIntoAnInvalidFile()
     {
-        $this
-            ->inject(RemoteWebDriver::class)
-            ->shouldReceive('getPageSource')
-            ->andReturn($source = '<html><body>Lorem ipsum...</body></html>');
+        $this->inject(RemoteWebDriver::class);
 
         $this
             ->inject(Filesystem::class)
             ->shouldReceive('put')
-            ->with($filepath = '/some/invalid/path/source.html', $source)
             ->andThrow(InvalidArgument::class);
 
         $this->expectException(InvalidArgument::class);
 
-        $this->savePageSource($filepath);
+        $this->savePageSource('/some/invalid/path/source.html');
     }
 }

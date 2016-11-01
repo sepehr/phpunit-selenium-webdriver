@@ -58,7 +58,7 @@ class RemoteWebDriverTest extends UnitSeleniumTestCase
     public function canBeForcedToCreateANewInstanceEvenThoughOneAlreadyExists()
     {
         $this
-            ->injectSpy('alias:' . RemoteWebDriver::class)
+            ->inject('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
             ->andReturn(Mockery::self());
 

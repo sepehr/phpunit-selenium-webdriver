@@ -47,8 +47,8 @@ class ElementInteractionTest extends UnitSeleniumTestCase
 
         $element
             ->shouldHaveReceived('sendKeys')
-            ->once()
-            ->with($text);
+            ->with($text)
+            ->once();
     }
 
     /** @test */
@@ -65,8 +65,8 @@ class ElementInteractionTest extends UnitSeleniumTestCase
 
         $element
             ->shouldHaveReceived('sendKeys')
-            ->times(3)
-            ->with($text);
+            ->with($text)
+            ->times(3);
     }
 
     /** @test */
@@ -91,12 +91,11 @@ class ElementInteractionTest extends UnitSeleniumTestCase
         $element = $this
             ->mock(RemoteWebElement::class)
             ->shouldReceive('invalidAction')
-            ->andThrow(\Exception::class)
-            ->getMock();
+            ->andThrow(\Exception::class);
 
         $this->expectException(InvalidArgument::class);
 
-        $this->type('dummyText', $element);
+        $this->type('dummyText', $element->getMock());
     }
 
     /**

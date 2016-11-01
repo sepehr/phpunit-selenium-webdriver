@@ -29,7 +29,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function returnsAnEmptyArrayWhenNoElementIsFound()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->andReturn([]);
 
@@ -40,7 +40,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function unwrapsContainingArrayWhenFindsOnlyOneElement()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->andReturn(['foo']);
 
@@ -51,7 +51,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function findsJustOneElement()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElement')
             ->andReturn($expected = 'foo');
 
@@ -62,7 +62,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function throwsAnExceptionWhenTryingToFindJustOneElementAndItsNotAvailable()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElement')
             ->andThrow(NoSuchElementException::class);
 
@@ -75,7 +75,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function findsElementsByXpathLocator()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->andReturn($expected = ['el1', 'el2']);
 
@@ -86,7 +86,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function throwsAnExceptionIfNoElementIsFoundByProvidedLocator()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->times(6);
 
@@ -109,13 +109,16 @@ class ElementQueryTest extends UnitSeleniumTestCase
      */
     public function findsElementsByDifferentMachanisms($api, array $args, $mechanism, $alt = null)
     {
-        $this->injectSpy(RemoteWebDriver::class);
+        $this
+            ->inject(RemoteWebDriver::class)
+            ->shouldReceive('findElements')
+            ->once();
 
         $this
-            ->injectMock(WebDriverBy::class)
+            ->inject(WebDriverBy::class)
             ->shouldReceive($mechanism)
-            ->once()
             ->with($alt ? $alt : $args[0])
+            ->once()
             ->andReturn(Mockery::self());
 
         $this->$api(...$args);
@@ -136,20 +139,20 @@ class ElementQueryTest extends UnitSeleniumTestCase
     public function findsElementsByDifferentFallbackMachanisms($api, array $args, array $mechanism, array $alt)
     {
         $this
-            ->injectMock(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->twice()
             ->andReturn([], $expected = 'foundElement');
 
         $this
-            ->injectMock(WebDriverBy::class)
+            ->inject(WebDriverBy::class)
             ->shouldReceive($mechanism[0])
-            ->once()
             ->with($alt[0])
+            ->once()
             ->andReturn(Mockery::self())
             ->shouldReceive($mechanism[1])
-            ->once()
             ->with($alt[1])
+            ->once()
             ->andReturn(Mockery::self());
 
         $this->assertSame($expected, $this->$api(...$args));
@@ -161,13 +164,12 @@ class ElementQueryTest extends UnitSeleniumTestCase
         $element = $this
             ->mock(RemoteWebElement::class)
             ->shouldReceive('getTagName')
-            ->andReturn('form')
-            ->getMock();
+            ->andReturn('form');
 
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
-            ->andReturn([$element]);
+            ->andReturn([$element->getMock()]);
 
         $this->assertInstanceOf(RemoteWebElement::class, $this->findForm('formLocator'));
     }
@@ -181,7 +183,7 @@ class ElementQueryTest extends UnitSeleniumTestCase
             ->andReturn('div');
 
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->andReturn([$element->getMock()]);
 

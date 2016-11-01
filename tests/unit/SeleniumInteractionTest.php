@@ -19,7 +19,6 @@ class SeleniumInteractionTest extends UnitSeleniumTestCase
         $this
             ->mock('alias:' . RemoteWebDriver::class)
             ->shouldReceive('create')
-            ->once()
             ->andThrow(WebDriverCurlException::class);
 
         $this->expectException(SeleniumNotRunning::class);

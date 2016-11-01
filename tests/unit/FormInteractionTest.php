@@ -29,7 +29,7 @@ class FormInteractionTest extends UnitSeleniumTestCase
     public function throwsAnExceptionWhenFillingAFieldWithInvalidNameLocator()
     {
         $this
-            ->injectSpy(RemoteWebDriver::class)
+            ->inject(RemoteWebDriver::class)
             ->shouldReceive('findElements')
             ->andReturn([]);
 
